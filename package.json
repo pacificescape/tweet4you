@@ -1,0 +1,33 @@
+{
+  "name": "tweet4you",
+  "version": "0.0.0",
+  "description": "bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pacificescape/tweet4you.git"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "twitter"
+  ],
+  "author": "arkasha",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pacificescape/tweet4you/issues"
+  },
+  "homepage": "https://github.com/pacificescape/tweet4you#readme",
+  "dependencies": {
+    "cron": "^1.8.2",
+    "dotenv": "^8.2.0",
+    "got": "^10.5.5",
+    "mongoose": "^5.9.1",
+    "oauth-1.0a": "^2.2.6",
+    "telegraf": "^3.36.0",
+    "telegraf-ratelimit": "^2.0.0"
+  }
+}
