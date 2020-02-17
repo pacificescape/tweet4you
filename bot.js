@@ -15,11 +15,11 @@ const bot = new Telegraf(process.env.BOT_TOKEN, {
     }
 })
 
-const checking = async (ctx) => {
+const checking = async () => {
     console.log(counter++)
-    ctx.reply(counter)
+    bot.telegram.sendMessage('@fkey124', `${counter}`)
     try {
-        const posts = await handleGetTweets(ctx)
+        const posts = await handleGetTweets()
         let newPosts = []
 
         for (const post of posts) {
@@ -34,24 +34,26 @@ const checking = async (ctx) => {
 
         if(newPosts.length > 0) {
             for (const post of newPosts) {
-                ctx.reply(post.text)
+                bot.telegram.sendMessage('@fkey124', post.text)
             }
         }
 
     } catch (err) {
-        ctx.reply(err)
+        bot.telegram.sendMessage('@fkey124', err)
     }
 
 }
 
-var job = new CronJob('* * * * * *', (ctx) => {
-    checking(ctx)
-}, null, true, 'America/Los_Angeles');
+var job = new CronJob('*/10 * * * *', checking, null, false, 'America/Los_Angeles' , null);
 
 
 
-bot.command('go', () => job.start() )
+bot.command('go', (ctx) => {
+    job.start(ctx)
+} )
 
+
+bot.on('message', () => {bot.telegram.sendMessage('@fkey124', '123')})
 
 
 db.connection.once('open', async () => {
