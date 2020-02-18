@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 
 
 const tweeterSchema = mongoose.Schema({
-  tweeter_id: {
+  id: {
     type: Number,
     index: true,
     unique: true,
@@ -11,7 +11,7 @@ const tweeterSchema = mongoose.Schema({
   last_status: [{
 
     }],
-  tweetername: String,
+  screen_name: String,
   locale: String,
 }, {
   timestamps: true,
