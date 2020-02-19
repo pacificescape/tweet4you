@@ -1,6 +1,5 @@
 const mongoose = require('mongoose')
 
-
 const user = mongoose.Schema({
   telegram_id: {
     type: Number,
@@ -8,9 +7,15 @@ const user = mongoose.Schema({
     unique: true,
     required: true,
   },
-  groups: [{
-    name: String,
-    id: Number,
+  tweeters: [{
+    screen_name: String,
+    name: String, // tweeter name
+    id: {
+      type: Number,
+      index: true,
+      unique: true,
+      required: true,
+    },
     settings: {
       retweets: Boolean,
       replies: Boolean,
@@ -22,11 +27,10 @@ const user = mongoose.Schema({
       default: false
     }
   }],
-  username: String,
+  username: String, //tg
   locale: String,
 }, {
   timestamps: true,
 })
-
 
 module.exports = user

@@ -9,7 +9,8 @@ const tweeterSchema = mongoose.Schema({
     required: true,
   },
   last_status: [{
-
+    id: Number,
+    text: String
     }],
   screen_name: String,
   locale: String,

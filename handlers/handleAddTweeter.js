@@ -1,8 +1,14 @@
-const list_id = 1228123449194876941
+const list_id = process.env.LIST_ID
 const {
     listMembersCreate,
     userShow
 } = require('../API')
+
+/**
+ *
+ * Function get screen_name from message, check it by userShow() and create/update field Tweet
+ *
+ */
 
 module.exports = handleAddTweeter = async (ctx) => {
     let tweeter
