@@ -8,8 +8,8 @@ const auth = require('../OAuth')
  *  limit: 100,000 requests per day to the /statuses/user_timeline endpoint
 */
 
-module.exports = user_timeline = (id, count) => {
-    let url = `https://api.twitter.com/1.1/statuses/user_timeline.json?user_id=${id}&count=${count}`
+module.exports = user_timeline = (screen_name) => {
+    let url = `https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=${screen_name}&count=10`
     try {
         return got(url, {
             headers: auth(url),

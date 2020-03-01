@@ -1,7 +1,9 @@
+const handleListPolling = require('./handleListPolling');
 const handleAddTweeter = require('./handleAddTweeter');
-const handleGetTweets = require('./handleGetTweets');
+const handleTwitterPolling = require('./handleTwitterPolling');
 
 module.exports = {
     handleAddTweeter,
-    handleGetTweets
+    handleTwitterPolling,
+    handleListPolling
 }

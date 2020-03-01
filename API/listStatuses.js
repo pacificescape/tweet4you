@@ -10,7 +10,7 @@ const list_id = process.env.LIST_ID
  * Requests / 15-min window (user auth): 900
  */
 
- module.exports = listStatuses = () => {
+ module.exports = listStatuses = (list_id) => {
     let url = `https://api.twitter.com/1.1/lists/statuses.json?list_id=${list_id}`
     try {
         return got(url, {

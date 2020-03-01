@@ -1,24 +1,24 @@
 const CronJob = require('cron').CronJob
-const { listStatuses } = require('../API/')
+const { user_timeline } = require('../API')
 
 /**
  *
- * handleListPolling - class for checking twitter list
+ * handleTwitterPolling - class for checking twitter account
  *
 */
 
-function handleListPolling(bot, list_id) {
-    this.list_id = process.env.LIST_ID
+function handleTwitterPolling(bot, twitter_name) {
+    this.twitter_name = twitter_name || 'fkey123' // user_id
     this.counter = 0 // MongoDB
-    this.last_id = 1233924941755621376 // MongoDB
+    this.last_id = 1232632992259960832 // MongoDB
     this.bot = bot
     this.job = new CronJob('*/60 * * * * *', this.cronPolling, null, false, 'America/Los_Angeles', this);
 }
 
-handleListPolling.prototype.cronPolling = async function() {
-    console.log('ListPolling: ', `${this.counter++}`)
+handleTwitterPolling.prototype.cronPolling = async function() {
+    console.log('TwitterPolling: ', `${this.counter++}`)
     try {
-        const posts = await listStatuses(this.list_id)
+        const posts = await user_timeline(this.twitter_name, 10)
         let newPosts = []
 
         for (const post of posts) {
@@ -39,8 +39,10 @@ handleListPolling.prototype.cronPolling = async function() {
         }
 
     } catch (err) {
-        console.log('List error', err)
+        console.log('TwitterPolling error: ', err)
     }
 }
 
-module.exports = handleListPolling
+module.exports = handleTwitterPolling
+
+// сделать класс чтобы поллить разные списки
