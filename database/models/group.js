@@ -10,6 +10,23 @@ const groupSchema = mongoose.Schema({
   title: String,
   username: String,
   invite_link: String,
+  speed: Number,
+  prime: {
+    type: Boolean,
+    default: false
+  },
+  primeEx: Date,
+  onlyOwner: {
+    type: Boolean,
+    default: false
+  },
+  users: [{
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    owner: Boolean
+  }],
   stats: {
     tweetsCount: {
       type: Number,
@@ -21,8 +38,10 @@ const groupSchema = mongoose.Schema({
     }
   },
   twitters: [{
-    name: String,
-    id: Number,
+    twitter: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Twitter'
+    },
     settings: {
       retweets: Boolean,
       replies: Boolean,
@@ -33,7 +52,7 @@ const groupSchema = mongoose.Schema({
       type: Boolean,
       default: false
     }
-  }]
+  }],
 }, {
   timestamps: true
 })

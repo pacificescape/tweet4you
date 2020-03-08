@@ -1,4 +1,6 @@
+const { EventEmitter } = require('events')
 const CronJob = require('cron').CronJob
+
 const { listStatuses } = require('../API/')
 
 /**

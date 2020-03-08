@@ -1,6 +1,13 @@
-const Telegraf = require('telegraf');
+const Telegraf = require('telegraf')
+const session = require('telegraf/session')
+const path = require('path')
+const I18n = require('telegraf-i18n')
+const scenes = require('./scenes')
 const { db } = require('./database')
-
+const {
+    owner
+} = require('./middlewares')
+const menu = require('./scenes')
 const {
     handleAddTweeter,
     handleListPolling,
@@ -14,44 +21,72 @@ const bot = new Telegraf(process.env.BOT_TOKEN, {
         webhookReply: false
     }
 })
+bot.use(session())
 
-// bot.use(async (ctx, next) => {
-//     ctx.state.db = db
+// const { match } = I18n
+const i18n = new I18n({
+  directory: path.resolve(__dirname, 'locales'),
+  defaultLanguage: 'ru'
+})
 
-//     await next()
-// })
+bot.use(i18n)
 
-const fkey = new handleTwitterPolling(bot)
+bot.use(async (ctx, next) => {
+    const ms = new Date()
 
-bot.command('fkey', () => fkey.job.start())
-bot.command('f', () => fkey.job.stop())
+    if (ctx.from) {
+      if (!ctx.session.user) {
+        ctx.session.user = await db.User.update(ctx)
+      }
+    }
+    // if (ctx.session.user && ctx.session.user.locale) console.log(ctx.session.user.locale)
+    if (ctx.callbackQuery) ctx.state.answerCbQuery = []
+    return next(ctx).then(() => {
+      if (ctx.callbackQuery) ctx.answerCbQuery(...ctx.state.answerCbQuery).catch((err) => console.log(err))
+      console.log('Response time %sms', new Date() - ms)
+    })
+  })
 
-bot.on('message', () => { bot.telegram.sendMessage('@fkey124', '123') })
+
+bot.use(async (ctx, next) => {
+    ctx.state.db = db
+
+    await next()
+})
+
+
+bot.use(menu)
+
+const fkey = new handleTwitterPolling(bot);
+const list = new handleListPolling(bot); // вынести в отдельный файл
+
+bot.command('fkey', owner, () => fkey.job.start())
+bot.command('f', owner, () => fkey.job.stop())
 bot.command('add', handleAddTweeter)
 
-// db.connection.once('open', async () => {
-//     console.log('Connected to MongoDB')
-//     const fkey = new handleListPolling(bot)
-//     if (process.env.BOT_DOMAIN) {
-//         bot.launch({
-//             webhook: {
-//                 domain: process.env.BOT_DOMAIN,
-//                 hookPath: `/LyAdminBot:${process.env.BOT_TOKEN}`,
-//                 port: process.env.WEBHOOK_PORT || 2200
-//             }
-//         }).then(() => {
-//             console.log('bot start webhook')
-//         })
-//     } else {
-//         bot.launch().then(() => {
-//             console.log('bot start polling')
-//             fkey.job.start()
-//         })
-//     }
-// })
+bot.command('start', (ctx) => ctx.scene.enter('mainMenu'))
+bot.on('message', (ctx) => ctx.reply(ctx.message.text))
+bot.action(/.+/, (ctx) => ctx.scene.enter('mainMenu'))
+bot.use(scenes.middleware())
 
-const list = new handleListPolling(bot)
-bot.launch().then(() => {
-    console.log('bot start polling')
-    list.job.start()
+
+db.connection.once('open', async () => {
+    console.log('Connected to MongoDB')
+    if (process.env.BOT_DOMAIN) {
+        bot.launch({
+            webhook: {
+                domain: process.env.BOT_DOMAIN,
+                hookPath: `/tweet3bot:${process.env.BOT_TOKEN}`,
+                port: process.env.WEBHOOK_PORT || 2200
+            }
+        }).then(() => {
+            console.log('bot start webhook')
+        }).catch((error) => console.log(error))
+    } else {
+        bot.launch().then(() => {
+            console.log('bot start polling')
+            // list.job.start();
+            // fkey.job.start();
+        }).catch((error) => console.log(error))
+    }
 })

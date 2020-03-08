@@ -1,6 +1,6 @@
 {
   "name": "tweet4you",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "bot",
   "main": "index.js",
   "scripts": {
@@ -28,6 +28,7 @@
     "mongoose": "^5.9.1",
     "oauth-1.0a": "^2.2.6",
     "telegraf": "^3.36.0",
+    "telegraf-i18n": "^6.6.0",
     "telegraf-ratelimit": "^2.0.0"
   }
 }

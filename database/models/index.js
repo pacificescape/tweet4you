@@ -1,10 +1,12 @@
-const Tweeter = require('./tweeter')
+const Twitter = require('./twitter')
+const List = require('./list')
 const Group = require('./group')
 const User = require('./user')
 
 
 module.exports = {
-  Tweeter,
+  Twitter,
+  List,
   Group,
   User
 }

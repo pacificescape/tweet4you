@@ -1,7 +1,9 @@
 const mongoose = require('mongoose')
 
 
-const tweeterSchema = mongoose.Schema({
+const twitterSchema = mongoose.Schema({
+  screen_name: String,
+  name: String,
   id: {
     type: Number,
     index: true,
@@ -19,4 +21,4 @@ const tweeterSchema = mongoose.Schema({
 })
 
 
-module.exports = tweeterSchema
+module.exports = twitterSchema

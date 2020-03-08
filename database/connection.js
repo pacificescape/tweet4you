@@ -2,8 +2,10 @@ const mongoose = require('mongoose')
 
 
 const connection = mongoose.createConnection(process.env.MONGODB_URI, {
-  useUnifiedTopology: true,
   useNewUrlParser: true,
+  useUnifiedTopology: true,
+  useCreateIndex: true,
+  useFindAndModify: true
 })
 
 connection.catch((error) => {

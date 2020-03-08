@@ -1,36 +1,61 @@
 const mongoose = require('mongoose')
 
-const user = mongoose.Schema({
+const userSchema = mongoose.Schema({
   telegram_id: {
     type: Number,
     index: true,
     unique: true,
     required: true,
   },
-  tweeters: [{
-    screen_name: String,
-    name: String, // tweeter name
-    id: {
-      type: Number,
-      index: true,
-      unique: true,
-      required: true,
+  username: String,
+  first_name: String,
+  last_name: String,
+  twitters: [{
+    twitter: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Twitter'
     },
     settings: {
-      retweets: Boolean,
-      replies: Boolean,
-      tweets: Boolean,
-      images: Boolean
+      retweets: {
+        type: Boolean,
+        default: true
+      },
+      replies: {
+        type: Boolean,
+        default: true
+      },
+      tweets: {
+        type: Boolean,
+        default: true
+      },
+      images: {
+        type: Boolean,
+        default: true
+      },
+      links: {
+        type: Boolean,
+        default: true
+      },
+      privateMesages: {
+        type: Boolean,
+        default: false
+      },
     },
     create: {
       type: Boolean,
       default: false
     }
   }],
-  username: String, //tg
-  locale: String,
+  groups: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Group'
+  }],
+  locale: {
+    type: String,
+    default: 'ru'
+  },
 }, {
   timestamps: true,
 })
 
-module.exports = user
+module.exports = userSchema
