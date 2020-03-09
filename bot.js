@@ -57,7 +57,7 @@ bot.use(async (ctx, next) => {
 
 bot.use(menu)
 
-const fkey = new handleTwitterPolling(bot);
+const fkey = new handleTwitterPolling(bot, db, 'fkey123');
 const list = new handleListPolling(bot); // вынести в отдельный файл
 
 bot.command('fkey', owner, () => fkey.job.start())

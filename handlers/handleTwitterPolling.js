@@ -5,28 +5,35 @@ const { user_timeline } = require('../API')
  *
  * handleTwitterPolling - class for checking twitter account
  *
+ *
 */
 
-function handleTwitterPolling(bot, twitter_name) {
-    this.twitter_name = twitter_name || 'fkey123' // user_id
-    this.counter = 0 // MongoDB
-    this.last_id = 1232632992259960832 // MongoDB
-    this.bot = bot
-    this.job = new CronJob('*/60 * * * * *', this.cronPolling, null, false, 'America/Los_Angeles', this);
+function handleTwitterPolling(bot, db, twitter_name) {
+    db.Twitter.findOne({ screen_name: twitter_name })
+        .then((twitter) => {
+            this.twitter = twitter
+            this.screen_name = twitter.screen_name || 'fkey123' // user_id
+            this.counter = twitter.counter // MongoDB
+            this.last_id = twitter.last_status.last_id
+            this.bot = bot
+            this.job = new CronJob('*/60 * * * * *', this.cronPolling, null, false, 'America/Los_Angeles', this);
+            this.save = handleTwitterPolling.prototype.save.bind(this)
+        }) // 1232632992259960832 // MongoDB
+        .catch((error) => console.log(error))
 }
 
-handleTwitterPolling.prototype.cronPolling = async function() {
-    console.log('TwitterPolling: ', `${this.counter++}`)
+handleTwitterPolling.prototype.cronPolling = async function () {
+    console.log('TwitterPolling: ', `${this.twitter.counter++}`)
     try {
-        const posts = await user_timeline(this.twitter_name, 10)
+        const posts = await user_timeline(this.twitter.screen_name, 10)
         let newPosts = []
 
         for (const post of posts) {
-            if (post.id == this.last_id) {
-                this.last_id = posts[0].id
+            if (post.id == this.twitter.last_id) {
+                this.twitter.last_id = posts[0].id
                 break
             }
-            if (post.id !== this.last_id) {
+            if (post.id !== this.twitter.last_id) {
                 newPosts.push(post)
             }
         }
@@ -35,12 +42,18 @@ handleTwitterPolling.prototype.cronPolling = async function() {
             for (const post of newPosts) {
                 this.bot.telegram.sendMessage('@fkey124', post.text)
             }
-            this.last_id = posts[0].id
+            this.twitter.last_id = posts[0].id
         }
+
+        this.save(this.twitter)
 
     } catch (err) {
         console.log('TwitterPolling error: ', err)
     }
+}
+
+handleTwitterPolling.prototype.save = async (twitter) => {
+    await twitter.save() // вызов без аргументов
 }
 
 module.exports = handleTwitterPolling
