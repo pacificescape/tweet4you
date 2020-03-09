@@ -1,6 +1,6 @@
 const collections = require('./models') //
 const connection = require('./connection')
-const usersShow = require('../API')
+const { usersShow } = require('../API')
 const parseLink = require('../helpers/parseLink')
 
 
@@ -38,41 +38,52 @@ db.User.update = async (ctx) => {
   return user
 }
 
-db.Twitter.check = async (message) => {
-  let link = parseLink(message)
+db.Twitter.check = async (ctx) => {
+  let link = parseLink(ctx.message.text)
 
-  if(link) {
-    let user = await usersShow(link)
-
-    return user
+  if(!link) {
+    throw 'Wrong link'
   }
-  return
-} //ratelimit
+  let user = await usersShow(link)
 
-db.Twitter.update = async (ctx) => {
-  let twitter = await db.Twitter.check(ctx.text)
+  let twitter = await db.Twitter.findOne({ id: user.id })
+  .populate('users')
+  .catch((error) => console.log(error))
 
   if(!twitter) {
-    let link = parseLink(message)
-    if(!link) return null
-
-    let user = await usersShow(link)
-    if(!user.ok) return null
-
-    twitter = new ctx.db.Twitter()
-
-    twitter.counter = 0
-    twitter.screen_name= user.screen_name
-    twitter.name = user.name
-    twitter.id = user.id
-    twitter.last_status = user.
-    twitter.last_status = user.status
-    twitter.users = [].push(ctx.session.user)
-
-    await twitter.save()
+    user.error = true
+    return user
   }
 
   return twitter
+} //ratelimit
+
+db.Twitter.update = async (ctx) => {
+  let account = await db.Twitter.check(ctx)
+
+  if(account.error) {
+    twitter = new db.Twitter()
+
+    twitter.counter = 0
+    twitter.screen_name = account.screen_name
+    twitter.name = account.name
+    twitter.id = account.id
+    twitter.last_status = account.status
+    twitter.users.push(ctx.session.user)
+
+    await twitter.save()
+
+    ctx.session.user.twitters.push(twitter)
+    await ctx.session.user.save()
+
+    return twitter
+  }
+
+  account.users.push(ctx.session.user)
+  ctx.session.user.twitters.push(account)
+  await ctx.session.user.save()
+
+  return account
 }
 
 // List methods

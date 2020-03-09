@@ -17,7 +17,8 @@ const twitterSchema = mongoose.Schema({
   list: Number,
   users: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'User',
+    unique: true
   }],
   locale: String,
   counter: Number

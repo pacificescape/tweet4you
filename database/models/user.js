@@ -11,10 +11,8 @@ const userSchema = mongoose.Schema({
   first_name: String,
   last_name: String,
   twitters: [{
-    twitter: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Twitter'
-    },
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Twitter',
     settings: {
       retweets: {
         type: Boolean,

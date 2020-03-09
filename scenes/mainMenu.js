@@ -15,10 +15,14 @@ mainMenu.enter((ctx) => {
     )
 })
 
+mainMenu.action(/addTwitter/, async (ctx) => {
+    await ctx.answerCbQuery(`Oh, ${ctx.match[0]}! Great choice`)
+    ctx.scene.enter('twitterMenu')
+})
+
 mainMenu.action(/addGroup/, async (ctx) => {
     await ctx.answerCbQuery(`Oh, ${ctx.match[0]}! Great choice`)
     ctx.scene.enter('groupsMenu')
 })
-
 
 module.exports = mainMenu
