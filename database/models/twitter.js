@@ -13,9 +13,14 @@ const twitterSchema = mongoose.Schema({
   last_status: [{
     id: Number,
     text: String
-    }],
-  screen_name: String,
+  }],
+  list: Number,
+  users: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   locale: String,
+  counter: Number
 }, {
   timestamps: true,
 })

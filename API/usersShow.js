@@ -8,6 +8,15 @@ const auth = require('../OAuth')
  * The author's most recent Tweet will be returned inline when possible.
  */
 
-module.exports = userShow = (screen_name) => {
+module.exports = usersShow = (screen_name) => {
     let url = `https://api.twitter.com/1.1/users/show.json?screen_name=${screen_name}`
+    try {
+        return got(url, {
+            headers: auth(url),
+            responseType: 'json',
+            resolveBodyOnly: true
+        })
+    } catch (error) {
+        console.log(error)
+    }
 }
