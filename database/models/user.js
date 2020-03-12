@@ -13,37 +13,12 @@ const userSchema = mongoose.Schema({
   twitters: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Twitter',
-    settings: {
-      retweets: {
-        type: Boolean,
-        default: true
-      },
-      replies: {
-        type: Boolean,
-        default: true
-      },
-      tweets: {
-        type: Boolean,
-        default: true
-      },
-      images: {
-        type: Boolean,
-        default: true
-      },
-      links: {
-        type: Boolean,
-        default: true
-      },
-      privateMesages: {
-        type: Boolean,
-        default: false
-      },
-    },
-    create: {
-      type: Boolean,
-      default: false
-    }
+    unique: true,
   }],
+  create: {
+    type: Boolean,
+    default: false
+  },
   groups: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Group'
@@ -57,3 +32,31 @@ const userSchema = mongoose.Schema({
 })
 
 module.exports = userSchema
+
+// settings: [{
+//   id: Number,
+//   retweets: {
+//     type: Boolean,
+//     default: true
+//   },
+//   replies: {
+//     type: Boolean,
+//     default: true
+//   },
+//   tweets: {
+//     type: Boolean,
+//     default: true
+//   },
+//   images: {
+//     type: Boolean,
+//     default: true
+//   },
+//   links: {
+//     type: Boolean,
+//     default: true
+//   },
+//   privateMesages: {
+//     type: Boolean,
+//     default: false
+//   }
+// }],

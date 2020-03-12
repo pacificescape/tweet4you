@@ -10,10 +10,9 @@ const twitterSchema = mongoose.Schema({
     unique: true,
     required: true,
   },
-  last_status: [{
-    id: Number,
-    text: String
-  }],
+  last_status: {
+    type: Object
+  },
   list: Number,
   users: [{
     type: mongoose.Schema.Types.ObjectId,

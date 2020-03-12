@@ -5,14 +5,21 @@ const Extra = require('telegraf/extra')
 const mainMenu = new Scene('mainMenu')
 
 mainMenu.enter((ctx) => {
-    ctx.replyWithHTML(ctx.i18n.t('start', {
+    let clavier = Markup.inlineKeyboard([
+        Markup.callbackButton(ctx.i18n.t('add_twitter'), 'action=addTwitter'),
+        Markup.callbackButton(ctx.i18n.t('add_channel'), 'action=addGroup')
+    ]).extra()
+
+    let start_message_text = ctx.i18n.t('start', {
         name: `${ctx.session.user.first_name ? ctx.session.user.first_name : ''}${ctx.session.user.last_name ? ' ' + ctx.session.user.last_name : ''}`
-    }),
-        Markup.inlineKeyboard([
-            Markup.callbackButton(ctx.i18n.t('add_twitter'), 'action=addTwitter'),
-            Markup.callbackButton(ctx.i18n.t('add_channel'), 'action=addGroup')
-        ]).extra()
-    )
+    })
+
+    if(!ctx.message) {
+        ctx.editMessageText(start_message_text, clavier, { parse_mode: 'HTML' })
+        return
+    }
+
+    ctx.reply(start_message_text, clavier, { parse_mode: 'HTML' })
 })
 
 mainMenu.action(/addTwitter/, async (ctx) => {

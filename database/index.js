@@ -59,36 +59,51 @@ db.Twitter.check = async (ctx) => {
 } //ratelimit
 
 db.Twitter.update = async (ctx) => {
-  let account = await db.Twitter.check(ctx)
+  let fetched_tw = await db.Twitter.check(ctx)
 
-  if(account.error) {
+  if(fetched_tw.error) {
     twitter = new db.Twitter()
 
     twitter.counter = 0
-    twitter.screen_name = account.screen_name
-    twitter.name = account.name
-    twitter.id = account.id
-    twitter.last_status = account.status
-    twitter.users.push(ctx.session.user)
+    twitter.screen_name = fetched_tw.screen_name
+    twitter.name = fetched_tw.name
+    twitter.id = fetched_tw.id
+    twitter.last_status = fetched_tw.status
+    twitter.users.addToSet(ctx.session.user)
 
-    await twitter.save()
+    ctx.session.user.twitters.addToSet(twitter)
 
-    ctx.session.user.twitters.push(twitter)
-    await ctx.session.user.save()
+    await ctx.session.user.save().catch((error) => console.log(ctx.session.user.username, error))
 
-    return twitter
+    return await twitter.save().catch((error) => console.log(ctx.session.user.username, error))
   }
 
-  account.users.push(ctx.session.user)
-  ctx.session.user.twitters.push(account)
-  await ctx.session.user.save()
+  let add_user = await fetched_tw.users.addToSet(ctx.session.user)
+  console.log('add user: ', add_user)
 
-  return account
+  let tw_save = await fetched_tw.save().catch((error) => console.log(ctx.session.user.username, error))
+  console.log('tw_save: ', tw_save)
+
+  let old_tw = ctx.session.user.twitters.reduce((a, v) => v.id === fetched_tw.id ? true : false, false)
+
+  let add_twitter = !old_tw ? ctx.session.user.twitters.addToSet(fetched_tw) : null
+  console.log('add twitter: ', add_twitter)
+
+  let user_save = await ctx.session.user.save().catch((error) => console.log(ctx.session.user.username, error))
+  console.log(user_save)
+
+  return tw_save
 }
 
 // List methods
 
-// Group methods
+db.Group.update = async (ctx) => {
+  let username = ctx.match[1]
+
+
+
+  console.log(username)
+}
 
 module.exports = {
   db

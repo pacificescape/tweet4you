@@ -9,7 +9,6 @@ const {
 } = require('./middlewares')
 const menu = require('./scenes')
 const {
-    handleAddTweeter,
     handleListPolling,
     handleTwitterPolling
 } = require('./handlers')
@@ -21,7 +20,7 @@ const bot = new Telegraf(process.env.BOT_TOKEN, {
         webhookReply: false
     }
 })
-bot.use(session())
+bot.use(session({ttl: 600}))
 
 // const { match } = I18n
 const i18n = new I18n({
@@ -37,6 +36,7 @@ bot.use(async (ctx, next) => {
     if (ctx.from) {
       if (!ctx.session.user) {
         ctx.session.user = await db.User.update(ctx)
+        console.log('new session: ', new Date().toLocaleTimeString())
       }
     }
     // if (ctx.session.user && ctx.session.user.locale) console.log(ctx.session.user.locale)
@@ -62,10 +62,11 @@ const list = new handleListPolling(bot); // вынести в отдельный
 
 bot.command('fkey', owner, () => fkey.job.start())
 bot.command('f', owner, () => fkey.job.stop())
-bot.command('add', handleAddTweeter)
 
 bot.command('start', (ctx) => ctx.scene.enter('mainMenu'))
-bot.on('message', (ctx) => ctx.reply(ctx.message.text))
+bot.on('message', (ctx) => {
+    ctx.reply('/help')
+})
 bot.action(/.+/, (ctx) => ctx.scene.enter('mainMenu'))
 bot.use(scenes.middleware())
 

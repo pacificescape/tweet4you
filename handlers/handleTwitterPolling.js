@@ -18,19 +18,18 @@ function handleTwitterPolling(bot, db, twitter_name) {
             this.bot = bot
             this.job = new CronJob('*/60 * * * * *', this.cronPolling, null, false, 'America/Los_Angeles', this);
             this.save = handleTwitterPolling.prototype.save.bind(this)
-        }) // 1232632992259960832 // MongoDB
+        })
         .catch((error) => console.log(error))
 }
 
 handleTwitterPolling.prototype.cronPolling = async function () {
-    console.log('TwitterPolling: ', `${this.twitter.counter++}`)
     try {
         const posts = await user_timeline(this.twitter.screen_name, 10)
         let newPosts = []
 
         for (const post of posts) {
-            if (post.id == this.twitter.last_id) {
-                this.twitter.last_id = posts[0].id
+            if (post.id == this.twitter.last_status.id) {
+                // this.twitter.last_status.id = posts.id
                 break
             }
             if (post.id !== this.twitter.last_id) {
@@ -38,15 +37,22 @@ handleTwitterPolling.prototype.cronPolling = async function () {
             }
         }
 
-        if (newPosts.length > 0) {
-            for (const post of newPosts) {
-                this.bot.telegram.sendMessage('@fkey124', post.text)
-            }
-            this.twitter.last_id = posts[0].id
-        }
+        // if (newPosts.length > 0) {
+        //     for (const post of newPosts) {
+        //         this.bot.telegram.sendMessage('@fkey124', post.text)
+        //     }
+        //     this.twitter.last_id = posts[0].id
+        // }
 
+        newPosts.forEach((post) => {
+            this.bot.telegram.sendMessage('fkey124', post.text)
+        })
+
+        this.twitter.last_id = posts[0].id
+
+        console.log('TwitterPolling: ', `${this.twitter.counter++}`)
         this.save(this.twitter)
-
+        .then((object) => console.log(object))
     } catch (err) {
         console.log('TwitterPolling error: ', err)
     }
