@@ -19,7 +19,7 @@ mainMenu.enter((ctx) => {
         return
     }
 
-    ctx.reply(start_message_text, clavier, { parse_mode: 'HTML' })
+    ctx.replyWithHTML(start_message_text, clavier)
 })
 
 mainMenu.action(/addTwitter/, async (ctx) => {
