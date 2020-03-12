@@ -8,14 +8,15 @@ mainMenu.enter((ctx) => {
     let clavier = Markup.inlineKeyboard([
         Markup.callbackButton(ctx.i18n.t('add_twitter'), 'action=addTwitter'),
         Markup.callbackButton(ctx.i18n.t('add_channel'), 'action=addGroup')
-    ]).extra()
+    ]).extra({ parse_mode: 'HTML' })
 
     let start_message_text = ctx.i18n.t('start', {
         name: `${ctx.session.user.first_name ? ctx.session.user.first_name : ''}${ctx.session.user.last_name ? ' ' + ctx.session.user.last_name : ''}`
     })
 
     if(!ctx.message) {
-        ctx.editMessageText(start_message_text, clavier, { parse_mode: 'HTML' })
+        // Extra.HTML().markup((m) => m.inlineKeyboard(buttons($,m)));
+        ctx.editMessageText(start_message_text, clavier)
         return
     }
 

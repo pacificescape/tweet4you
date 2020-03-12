@@ -22,7 +22,7 @@ twitterMenu.enter((ctx) => {
             wrap: (btn, index, currentRow) => {
                 return currentRow.length ===  2 || index === twitters.length
             }
-          }).extra()
+          }).extra({ parse_mode: 'HTML' })
     ).catch((error) => console.log(ctx.from.id, error))
 })
 

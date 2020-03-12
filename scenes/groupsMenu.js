@@ -22,7 +22,7 @@ groupsMenu.enter((ctx) => {
             wrap: (btn, index, currentRow) => {
                 return currentRow.length ===  2 || index === groups.length
             }
-          }).extra()
+          }).extra({ parse_mode: 'HTML' })
     )
     .then((message) => ctx.scene.state.message_id = message.message_id)
     .catch((error) => console.log(ctx.from.id, error))
