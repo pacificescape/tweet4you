@@ -6,9 +6,8 @@ const twitterSchema = mongoose.Schema({
   name: String,
   id: {
     type: Number,
-    index: true,
-    unique: true,
     required: true,
+    unique: true
   },
   last_status: {
     type: Object
@@ -16,8 +15,7 @@ const twitterSchema = mongoose.Schema({
   list: Number,
   users: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    unique: true
+    ref: 'User'
   }],
   locale: String,
   counter: Number

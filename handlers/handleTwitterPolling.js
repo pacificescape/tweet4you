@@ -11,6 +11,8 @@ const { user_timeline } = require('../API')
 function handleTwitterPolling(bot, db, twitter_name) {
     db.Twitter.findOne({ screen_name: twitter_name })
         .then((twitter) => {
+            if(!twitter) return
+
             this.twitter = twitter
             this.screen_name = twitter.screen_name || 'fkey123' // user_id
             this.counter = twitter.counter // MongoDB

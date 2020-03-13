@@ -15,9 +15,14 @@ twitterMenu: |
 
   Чтобы добавить твиттер пришли ссылку вида <i>https://twitter.com/fkey123</i>
 
-
+error: Возникла непредвиденная ошибка.
 back: назад
 add_channel: Добавить канал/группу
 add_twitter: Добавить твиттер
 no_owner: Вы не являетесь владельцем бота.
 no_admin: Вы не являетесь администратором.
+
+twitter:
+  edit: Редактировать <i>${screen_name}</i>
+  delete: Удалить
+  addTo: Добавить в

@@ -32,7 +32,8 @@ db.User.update = async (ctx) => {
     user.first_name = ctx.from.first_name || ''
     user.last_name = ctx.from.last_name || ''
     user.locale = ctx.from.language_code || 'ru'
-    await user.save()
+
+    await user.save().catch((err) => console.log(err))
   }
 
   return user
