@@ -12,7 +12,7 @@ groupsMenu.enter((ctx) => {
     ]
 
     let groups = ctx.session.user.groups.map((v) => {
-        Markup.callbackButton(v.screen_name, `manage=${v.id}`)
+        return Markup.callbackButton(v.username, `manage=${v.username}`)
     })
 
     ctx.editMessageText(ctx.i18n.t('groupsMenu', {
@@ -47,14 +47,9 @@ groupsMenu.hears(/(@.+)/, async (ctx) => {
     let ad = await isAdmin(ctx, ctx.match[1])
     let chat = await ctx.getChat(ctx.match[1])
 
-    if(ad) {
-        console.log(chat)
-        console.log('is admin')
-    }
-
-    ctx.state.db.Group.update(chat)
+    ctx.state.db.Group.add(ctx)
         .then((g) => {
-            ctx.reply(`${g} Успешно добавлен.`, { reply_to_message_id: ctx.message.message_id })
+            ctx.reply(`${g.username} Успешно добавлен.`, { reply_to_message_id: ctx.message.message_id })
     })
         .catch((err) => {
             ctx.reply(`Ошибка: ${err}.`, { reply_to_message_id: ctx.message.message_id })

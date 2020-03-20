@@ -1,14 +1,14 @@
 const mongoose = require('mongoose')
 
 const groupSchema = mongoose.Schema({
-  group_id: {
-    type: Number,
+  group_id: Number,
+  title: String,
+  username: {
+    type: String,
     index: true,
     unique: true,
     required: true
   },
-  title: String,
-  username: String,
   invite_link: String,
   speed: Number,
   prime: {
@@ -21,11 +21,8 @@ const groupSchema = mongoose.Schema({
     default: false
   },
   users: [{
-    user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
-    },
-    owner: Boolean
   }],
   stats: {
     tweetsCount: {
@@ -38,23 +35,22 @@ const groupSchema = mongoose.Schema({
     }
   },
   twitters: [{
-    twitter: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Twitter'
-    },
-    settings: {
-      retweets: Boolean,
-      replies: Boolean,
-      tweets: Boolean,
-      images: Boolean
-    },
-    create: {
-      type: Boolean,
-      default: false
-    }
   }],
 }, {
   timestamps: true
 })
 
 module.exports = groupSchema
+
+// settings: {
+//   retweets: Boolean,
+//   replies: Boolean,
+//   tweets: Boolean,
+//   images: Boolean
+// },
+// create: {
+//   type: Boolean,
+//   default: false
+// }

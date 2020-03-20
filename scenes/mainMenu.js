@@ -14,9 +14,11 @@ mainMenu.enter((ctx) => {
         name: `${ctx.session.user.first_name ? ctx.session.user.first_name : ''}${ctx.session.user.last_name ? ' ' + ctx.session.user.last_name : ''}`
     })
 
-    ctx.editMessageText(start_message_text, clavier)
-        .catch(() => ctx.replyWithHTML(start_message_text, clavier))
-
+    if(ctx.message && !ctx.message.from.is_bot) {
+        ctx.replyWithHTML(start_message_text, clavier)
+        return
+    }
+    return ctx.editMessageText(start_message_text, clavier).catch((err) => console.log(err))
 })
 
 mainMenu.action(/addTwitter/, async (ctx) => {

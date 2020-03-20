@@ -79,6 +79,12 @@ db.Twitter.update = async (ctx) => {
     return await twitter.save().catch((error) => console.log(ctx.session.user.username, error))
   }
 
+  let findTwitter = await ctx.session.user.findOne({$elemMatch: {id: fetched_tw.id }})
+  console.log(findTwitter)
+
+  let findUser = await fetched_tw.find({'users': {$elemMatch: { telegram_id: ctx.session.user.telegram_id }}})
+  console.log(findUser)
+
   let add_user = await fetched_tw.users.addToSet(ctx.session.user)
   console.log('add user: ', add_user)
 
@@ -96,14 +102,61 @@ db.Twitter.update = async (ctx) => {
   return tw_save
 }
 
-// List methods
+// Group methods
 
-db.Group.update = async (ctx) => {
-  let username = ctx.match[1]
+db.Group.check = async (username) => {
+  if(!username) {
+    throw 'Wrong link'
+  }
 
+  let group = await db.Group.findOne({ username })
+  .populate('users')
+  .populate('twitters')
+  .catch((error) => console.log(error))
 
+  if(!group) {
+    return false
+  }
 
-  console.log(username)
+  return group
+}
+
+db.Group.update = async (ctx) => { // first time
+  let group = await db.Group.check(ctx.match[1])
+
+  group.telegram_id = ctx.chat.id
+  group.first_name = ctx.chat.title || ''
+  group.locale = ctx.from.language_code || 'ru'
+}
+
+db.Group.add = async (ctx) => {
+  let group = await db.Group.check(ctx.match[1])
+
+  if(!group) {
+    group = new db.Group()
+
+    group.username = ctx.match[1]
+
+    group.users.addToSet(ctx.session.user)
+
+    await group.save().catch((err) => console.log(err))
+
+    return ctx.session.user = ctx.session.user.save()
+  }
+
+  let newbie = group.users.reduce((a, v) => v.id === fetched_tw.id ? false : true, true)
+
+  if (newbie) {
+    group.users.addToSet(ctx.session.user)
+
+    ctx.session.user.groups.addToSet(group)
+
+    await group.save().catch((err) => console.log(err))
+  }
+
+  ctx.session.user = await ctx.session.user.save()
+
+  return
 }
 
 module.exports = {

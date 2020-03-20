@@ -1,10 +1,8 @@
-module.exports = async (ctx, chat) => {
-    let chat_member = await ctx.getChatAdministrators(chat).catch(() => 'private')
-    console.log(chat_member)
+module.exports = async (ctx, next) => {
+    let admins = await ctx.getChatAdministrators(ctx.chat.id).catch(() => [])
+    admins = admins.map((v) => v.user.id)
 
-    return chat_member
-    // if(ctx.message.from.id === +process.env.OWNER_ID) {
-    //     return await next()
-    // }
-    ctx.reply(ctx.i18n.t('no_admin'))
+    if(admins && admins.includes(ctx.message.from.id)) {
+        return await next()
+    }
 }

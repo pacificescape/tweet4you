@@ -10,8 +10,13 @@ const {
 const menu = require('./scenes')
 const {
     handleListPolling,
-    handleTwitterPolling
+    handleTwitterPolling,
+    sendInvite
 } = require('./handlers')
+const {
+    isAdmin
+} = require('./helpers')
+
 
 global.startDate = new Date();
 
@@ -47,13 +52,11 @@ bot.use(async (ctx, next) => {
     })
   })
 
-
 bot.use(async (ctx, next) => {
     ctx.state.db = db
 
     await next()
 })
-
 
 bot.use(menu)
 
@@ -64,12 +67,12 @@ bot.command('fkey', owner, () => fkey.job.start())
 bot.command('f', owner, () => fkey.job.stop())
 
 bot.command('start', (ctx) => ctx.scene.enter('mainMenu'))
+bot.hears('!tweet', isAdmin, sendInvite) // сделать бот приватным
 bot.on('message', (ctx) => {
     ctx.reply('/help')
 })
 bot.action(/.+/, (ctx) => ctx.scene.enter('mainMenu'))
 bot.use(scenes.middleware())
-
 
 db.connection.once('open', async () => {
     console.log('Connected to MongoDB')

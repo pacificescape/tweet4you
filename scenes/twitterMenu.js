@@ -55,7 +55,13 @@ twitterMenu.action(/manage=(.+)/, async (ctx) => {
 twitterMenu.hears(/twitter.com/, (ctx) => {
     ctx.state.db.Twitter.update(ctx)
         .then((t) => {
-            ctx.reply(`${t.name} Успешно добавлен.`, { reply_to_message_id: ctx.message.message_id })
+            ctx.reply(`${t.name} Успешно добавлен.`,
+            Markup.inlineKeyboard(editTwitterButtons.concat([
+                Markup.callbackButton(ctx.i18n.t('back'), `reenter`),
+                Markup.callbackButton('>', '>')
+            ]), {
+                wrap: (btn, index, currentRow) => currentRow.length === 2 || index === editTwitterButtons.length
+            }).extra({ parse_mode: 'HTML', reply_to_message_id: ctx.message.message_id }))
         })
         .catch((err) => {
             ctx.reply(`Ошибка: ${err}.`, { reply_to_message_id: ctx.message.message_id })
