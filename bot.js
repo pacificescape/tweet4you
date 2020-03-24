@@ -17,6 +17,9 @@ const {
     isAdmin
 } = require('./helpers')
 
+const { listShow } = require('./API')
+
+const {handleAddToList} = require('./handlers')
 
 global.startDate = new Date();
 

@@ -5,7 +5,7 @@ const twitterSchema = mongoose.Schema({
   screen_name: String,
   name: String,
   id: {
-    type: Number,
+    type: String,
     required: true,
     unique: true
   },
@@ -16,6 +16,10 @@ const twitterSchema = mongoose.Schema({
   users: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
+  }],
+  groups: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Group'
   }],
   locale: String,
   counter: Number

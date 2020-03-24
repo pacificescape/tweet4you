@@ -2,10 +2,10 @@ const crypto = require('crypto')
 const OAuth = require('oauth-1.0a')
 
 
-module.exports = function auth(url) {
+module.exports = function auth(url, method) {
     const request_data = {
         url: url,
-        method: 'GET',
+        method: method ? method : 'GET',
     }
 
     const token = {

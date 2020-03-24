@@ -2,7 +2,8 @@ const collections = require('./models') //
 const connection = require('./connection')
 const { usersShow } = require('../API')
 const parseLink = require('../helpers/parseLink')
-
+const { handleAddToList } = require('../handlers')
+let list_id = process.env.LIST_ID
 
 const db = {
   connection
@@ -16,10 +17,14 @@ Object.keys(collections).forEach((collectionName) => {
 // User methods
 
 db.User.check = async (telegram_id) => {
-  return await db.User.findOne({ telegram_id })
+  let user = await db.User.findOne({ telegram_id })
     .populate('twitters')
     .populate('groups')
-}
+
+  await db.User.populate(user, 'twitters.groups')
+
+  return user
+  }
 
 db.User.update = async (ctx) => {
   let user = await db.User.check(ctx.from.id)
@@ -36,6 +41,9 @@ db.User.update = async (ctx) => {
     await user.save().catch((err) => console.log(err))
   }
 
+  await user.populate({ path: 'twitters.groups', model: db.Group})
+  await user.populate({ path: 'groups.twitters', model: db.Twitter})
+
   return user
 }
 
@@ -49,6 +57,7 @@ db.Twitter.check = async (ctx) => {
 
   let twitter = await db.Twitter.findOne({ id: user.id })
   .populate('users')
+  .populate('groups')
   .catch((error) => console.log(error))
 
   if(!twitter) {
@@ -59,7 +68,7 @@ db.Twitter.check = async (ctx) => {
   return twitter
 } //ratelimit
 
-db.Twitter.update = async (ctx) => {
+db.Twitter.upToDate = async (ctx) => {
   let fetched_tw = await db.Twitter.check(ctx)
 
   if(fetched_tw.error) {
@@ -68,7 +77,7 @@ db.Twitter.update = async (ctx) => {
     twitter.counter = 0
     twitter.screen_name = fetched_tw.screen_name
     twitter.name = fetched_tw.name
-    twitter.id = fetched_tw.id
+    twitter.id = fetched_tw.id_str
     twitter.last_status = fetched_tw.status
     twitter.users.addToSet(ctx.session.user)
 
@@ -76,20 +85,22 @@ db.Twitter.update = async (ctx) => {
 
     await ctx.session.user.save().catch((error) => console.log(ctx.session.user.username, error))
 
-    return await twitter.save().catch((error) => console.log(ctx.session.user.username, error))
+    twitter = await twitter.save().catch((error) => console.log(ctx.session.user.username, error))
+
+    return
   }
 
-  let findTwitter = await ctx.session.user.findOne({$elemMatch: {id: fetched_tw.id }})
-  console.log(findTwitter)
+  // let findTwitter = await ctx.session.user.find({$elemMatch: {id: fetched_tw.id }})
+  // console.log(findTwitter)
 
-  let findUser = await fetched_tw.find({'users': {$elemMatch: { telegram_id: ctx.session.user.telegram_id }}})
-  console.log(findUser)
+  // let findUser = await fetched_tw.find({'users': {$elemMatch: { telegram_id: ctx.session.user.telegram_id }}})
+  // console.log(findUser)
 
-  let add_user = await fetched_tw.users.addToSet(ctx.session.user)
-  console.log('add user: ', add_user)
+  // let add_user = await fetched_tw.users.addToSet(ctx.session.user)
+  // console.log('add user: ', add_user)
 
-  let tw_save = await fetched_tw.save().catch((error) => console.log(ctx.session.user.username, error))
-  console.log('tw_save: ', tw_save)
+  // let tw_save = await fetched_tw.save().catch((error) => console.log(ctx.session.user.username, error))
+  // console.log('tw_save: ', tw_save)
 
   let old_tw = ctx.session.user.twitters.reduce((a, v) => v.id === fetched_tw.id ? true : false, false)
 
@@ -99,14 +110,46 @@ db.Twitter.update = async (ctx) => {
   let user_save = await ctx.session.user.save().catch((error) => console.log(ctx.session.user.username, error))
   console.log(user_save)
 
-  return tw_save
+  return
+}
+
+db.Twitter.deactivate = async (twitter, group) => {
+  await db.Twitter.findByIdAndUpdate(twitter._id, {
+    $pull: {
+      groups: group._id
+    }
+  }, { new: true }).catch((err) => err)
+
+  await db.Group.findByIdAndUpdate(group._id, {
+    $pull: {
+      twitters: twitter._id
+    }
+  }, { new: true }).catch((err) => err)
+
+  return null
+}
+
+db.Twitter.activate = async (twitter, group) => {
+  await db.Twitter.findByIdAndUpdate(twitter._id, {
+    $push: {
+      groups: group
+    }
+  })
+
+  await db.Group.findByIdAndUpdate(group._id, {
+    $push: {
+      twitters: twitter
+    }
+  })
+
+  return await handleAddToList(list_id, twitter.id).catch((err) => console.log(err))
 }
 
 // Group methods
 
 db.Group.check = async (username) => {
   if(!username) {
-    throw 'Wrong link'
+    throw 'Wrong username'
   }
 
   let group = await db.Group.findOne({ username })
@@ -134,21 +177,16 @@ db.Group.add = async (ctx) => {
 
   if(!group) {
     group = new db.Group()
-
     group.username = ctx.match[1]
-
     group.users.addToSet(ctx.session.user)
 
     await group.save().catch((err) => console.log(err))
-
-    return ctx.session.user = ctx.session.user.save()
   }
 
-  let newbie = group.users.reduce((a, v) => v.id === fetched_tw.id ? false : true, true)
+  let newbie = group.users.reduce((a, v) => v.id === group.id ? false : true, true)
 
   if (newbie) {
     group.users.addToSet(ctx.session.user)
-
     ctx.session.user.groups.addToSet(group)
 
     await group.save().catch((err) => console.log(err))
@@ -156,7 +194,7 @@ db.Group.add = async (ctx) => {
 
   ctx.session.user = await ctx.session.user.save()
 
-  return
+  return group
 }
 
 module.exports = {

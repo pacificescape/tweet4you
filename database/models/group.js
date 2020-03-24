@@ -5,7 +5,7 @@ const groupSchema = mongoose.Schema({
   title: String,
   username: {
     type: String,
-    index: true,
+    // index: true,
     unique: true,
     required: true
   },

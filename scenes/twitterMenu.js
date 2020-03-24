@@ -53,7 +53,7 @@ twitterMenu.action(/manage=(.+)/, async (ctx) => {
 })
 
 twitterMenu.hears(/twitter.com/, (ctx) => {
-    ctx.state.db.Twitter.update(ctx)
+    ctx.state.db.Twitter.upToDate(ctx)
         .then((t) => {
             ctx.reply(`${t.name} Успешно добавлен.`,
             Markup.inlineKeyboard(editTwitterButtons.concat([

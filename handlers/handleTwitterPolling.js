@@ -47,7 +47,7 @@ handleTwitterPolling.prototype.cronPolling = async function () {
         // }
 
         newPosts.forEach((post) => {
-            this.bot.telegram.sendMessage('fkey124', post.text)
+            this.bot.telegram.sendMessage('@fkey124', post.text)
         })
 
         this.twitter.last_id = posts[0].id

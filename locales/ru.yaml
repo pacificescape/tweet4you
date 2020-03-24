@@ -21,8 +21,12 @@ add_channel: Добавить канал/группу
 add_twitter: Добавить твиттер
 no_owner: Вы не являетесь владельцем бота.
 no_admin: Вы не являетесь администратором.
+delete: Удалить
 
 twitter:
   edit: Редактировать <i>${screen_name}</i>
   delete: Удалить
   addTo: Добавить в
+
+group:
+  toggle_posting: Канал ${group.username}, управление постином
