@@ -16,7 +16,7 @@ function handleTwitterPolling(bot, db, twitter_name) {
             this.twitter = twitter
             this.screen_name = twitter.screen_name || 'fkey123' // user_id
             this.counter = twitter.counter // MongoDB
-            this.last_id = twitter.last_status.last_id
+            // this.last_id = twitter.last_status.last_id
             this.bot = bot
             this.job = new CronJob('*/60 * * * * *', this.cronPolling, null, false, 'America/Los_Angeles', this);
             this.save = handleTwitterPolling.prototype.save.bind(this)

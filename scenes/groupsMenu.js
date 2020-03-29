@@ -109,7 +109,7 @@ groupsMenu.action(/deactivate=(.+)/, async (ctx) => {
 
     twitters.splice(twitterIndex, 1)
 
-    ctx.session.user = await ctx.state.db.User.update(ctx) // ???
+    ctx.session.user = await ctx.state.db.User.update(ctx)
 
     ctx.scene.enter('groupsMenu')
 })

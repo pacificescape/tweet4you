@@ -64,10 +64,10 @@ bot.use(async (ctx, next) => {
 bot.use(menu)
 
 const fkey = new handleTwitterPolling(bot, db, 'fkey123');
-const list = new handleListPolling(bot); // вынести в отдельный файл
+const list = new handleListPolling(bot, db); // вынести в отдельный файл
 
-bot.command('fkey', owner, () => fkey.job.start())
-bot.command('f', owner, () => fkey.job.stop())
+bot.command('fs', owner, () => list.job.start())
+bot.command('f', owner, () => list.job.stop())
 
 bot.command('start', (ctx) => ctx.scene.enter('mainMenu'))
 bot.hears('!tweet', isAdmin, sendInvite) // сделать бот приватным
@@ -92,7 +92,7 @@ db.connection.once('open', async () => {
     } else {
         bot.launch().then(() => {
             console.log('bot start polling')
-            // list.job.start();
+            list.job.start();
             // fkey.job.start();
         }).catch((error) => console.log(error))
     }

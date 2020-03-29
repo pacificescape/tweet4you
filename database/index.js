@@ -87,7 +87,7 @@ db.Twitter.upToDate = async (ctx) => {
 
     twitter = await twitter.save().catch((error) => console.log(ctx.session.user.username, error))
 
-    return
+    return twitter
   }
 
   // let findTwitter = await ctx.session.user.find({$elemMatch: {id: fetched_tw.id }})
