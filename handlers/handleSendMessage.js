@@ -1,6 +1,6 @@
 const Markup = require('telegraf/markup')
 
-const handleSendMessage = async (bot, message, groups) => {
+const handleSendMessage = async (bot, message, groups, onlyMedia) => {
     let text = message.text
     let retweeted = message.retweeted_status ? message.retweeted_status : false
     let medias
@@ -73,7 +73,7 @@ const handleSendMessage = async (bot, message, groups) => {
     }
     text = text.replace(/RT /, '#retweet\n')
 
-    if(!medias) {
+    if(!medias && !onlyMedia) {
         groups.forEach(group => {
             bot.telegram[method](group, `${text}${link ? `\n<a href="${link}">link</a>` : ''}`, {
                 parse_mode: 'HTML',
@@ -110,12 +110,12 @@ const handleSendMessage = async (bot, message, groups) => {
     // let group = groups.shift()
     groups.forEach((group, i) => {
         setTimeout(() => {
-            medias[0].caption = `${text.trim()}\n<a href="${retweeted_urls.expanded_url}">${retweeted_urls.display_url}</a>${link ? `\n<a href="${link}">link</a>` : ''}`
+            medias[0].caption = !onlyMedia ? `${text.trim()}\n<a href="${retweeted_urls.expanded_url}">${retweeted_urls.display_url}</a>${link ? `\n<a href="${link}">link</a>` : ''}` : ''
             medias[0].parse_mode = 'HTML'
 
             bot.telegram[method](group, medias, {
-                caption:
-                `${text.trim()}<a href="${retweeted_urls.expanded_url}">${retweeted_urls.display_url}</a>\n<a href="${link}">link</a>`,
+                caption: !onlyMedia ?
+                `${text.trim()}<a href="${retweeted_urls.expanded_url}">${retweeted_urls.display_url}</a>\n<a href="${link}">link</a>` : '',
                 parse_mode: 'HTML',
                 disable_web_page_preview: false
             })

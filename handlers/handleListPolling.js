@@ -45,7 +45,11 @@ class handleListPolling {
                     if (post.user.id_str === twitter.id) {
                         if (Date.parse(post.created_at) > Date.parse(last_status.created_at)) {
                             twitter.last_status = post
-                            newPosts.push({ post, groups: twitter.groups.map(g => g.group_id ? g.group_id : g.username) })
+                            newPosts.push({
+                                post,
+                                groups: twitter.groups.map(g => g.group_id ? g.group_id : g.username),
+                                onlyMedia: twitter.onlyMedia || false
+                            })
                         }
                     }
                 }
@@ -53,8 +57,8 @@ class handleListPolling {
             })
 
             if (newPosts.length > 0) {
-                newPosts.map(({ post, groups = [] }, i) => {
-                    setTimeout(() => handleSendMessage(this.bot, post, groups), i*1000)
+                newPosts.map(({ post, groups = [], onlyMedia }, i) => {
+                    setTimeout(() => handleSendMessage(this.bot, post, groups, onlyMedia), i*1000)
                 })
             }
 
