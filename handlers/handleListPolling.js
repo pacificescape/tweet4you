@@ -18,7 +18,7 @@ class handleListPolling {
         this.counter = 0
     }
 
-    getTwitters = async (posts) => {
+    async getTwitters(posts) {
         let ids = [...new Set(posts.map((post) => post.user.id_str))]
 
         let twitters = await Promise.all(ids.map((id) => {
@@ -29,8 +29,8 @@ class handleListPolling {
         return twitters.filter(e => e)
     }
 
-    cronPolling = async function () {
-        console.log('ListPolling: ', `${this.counter++}`)
+    async cronPolling() {
+        console.log('ListPolling: ', `${this.counter++}`, new Date().toLocaleTimeString('it-IT'))
         try {
             let posts = await listStatuses(this.list_id)
             let twitters = await this.getTwitters(posts)
@@ -53,11 +53,8 @@ class handleListPolling {
             })
 
             if (newPosts.length > 0) {
-                newPosts.map(({ post, groups = [] }) => {
-                    handleSendMessage(this.bot, post, groups)
-                    // groups.forEach((group) => {
-                    //     this.bot.telegram.sendMessage(group, post.text)
-                    // })
+                newPosts.map(({ post, groups = [] }, i) => {
+                    setTimeout(() => handleSendMessage(this.bot, post, groups), i*1000)
                 })
             }
 
