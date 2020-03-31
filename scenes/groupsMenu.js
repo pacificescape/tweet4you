@@ -74,7 +74,7 @@ groupsMenu.action(/group=(.+)/, async (ctx) => {
 
     let twitters = ctx.session.user.twitters.map((v, i) => {
         let enabled = getGroup(v, group.username)
-        return Markup.callbackButton(`${v.screen_name} ${enabled ? '✅' : '❎'}`, `${enabled ? `deactivate=${i}` : `activate=${i}`}`)
+        return Markup.callbackButton(`${v.screen_name} ${enabled ? '✅' : '❌'}`, `${enabled ? `deactivate=${i}` : `activate=${i}`}`)
     })
 
     // let manage = group.twitters.map((v) => Markup.callbackButton(v.screen_name, `manage=${v.screen_name}`))

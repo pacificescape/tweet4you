@@ -24,12 +24,12 @@ db.User.check = async (telegram_id) => {
   await db.User.populate(user, 'twitters.groups')
 
   return user
-  }
+}
 
 db.User.update = async (ctx) => {
   let user = await db.User.check(ctx.from.id)
 
-  if(!user) {
+  if (!user) {
     user = new db.User()
 
     user.telegram_id = ctx.from.id
@@ -41,8 +41,8 @@ db.User.update = async (ctx) => {
     await user.save().catch((err) => console.log(err))
   }
 
-  await user.populate({ path: 'twitters.groups', model: db.Group})
-  await user.populate({ path: 'groups.twitters', model: db.Twitter})
+  await user.populate({ path: 'twitters.groups', model: db.Group })
+  await user.populate({ path: 'groups.twitters', model: db.Twitter })
 
   return user
 }
@@ -50,17 +50,17 @@ db.User.update = async (ctx) => {
 db.Twitter.check = async (ctx) => {
   let link = parseLink(ctx.message.text)
 
-  if(!link) {
+  if (!link) {
     throw 'Wrong link'
   }
   let user = await usersShow(link)
 
   let twitter = await db.Twitter.findOne({ id: user.id })
-  .populate('users')
-  .populate('groups')
-  .catch((error) => console.log(error))
+    .populate('users')
+    .populate('groups')
+    .catch((error) => console.log(error))
 
-  if(!twitter) {
+  if (!twitter) {
     user.error = true
     return user
   }
@@ -71,7 +71,7 @@ db.Twitter.check = async (ctx) => {
 db.Twitter.upToDate = async (ctx) => {
   let fetched_tw = await db.Twitter.check(ctx)
 
-  if(fetched_tw.error) {
+  if (fetched_tw.error) {
     twitter = new db.Twitter()
 
     twitter.counter = 0
@@ -129,6 +129,17 @@ db.Twitter.deactivate = async (twitter, group) => {
   return null
 }
 
+db.Twitter.settings = async (twitter_id, group_id, option) => {
+  let group = await db.Group.findById(group_id)
+
+  group.settings.forEach((set) => {
+    if (set.twitter_id === twitter_id) {
+      set[option] = !set[option]
+    }
+  })
+  group.save()
+}
+
 db.Twitter.activate = async (twitter, group) => {
   await db.Twitter.findByIdAndUpdate(twitter._id, {
     $push: {
@@ -138,7 +149,17 @@ db.Twitter.activate = async (twitter, group) => {
 
   await db.Group.findByIdAndUpdate(group._id, {
     $push: {
-      twitters: twitter
+      twitters: twitter,
+      settings: {
+        twitter_id: twitter.id,
+        link: true,
+        retweets: true,
+        replies: true,
+        images: true,
+        videos: true,
+        onlyText: false,
+        onlyMedia: false
+      }
     }
   })
 
@@ -148,16 +169,16 @@ db.Twitter.activate = async (twitter, group) => {
 // Group methods
 
 db.Group.check = async (username) => {
-  if(!username) {
+  if (!username) {
     throw 'Wrong username'
   }
 
   let group = await db.Group.findOne({ username })
-  .populate('users')
-  .populate('twitters')
-  .catch((error) => console.log(error))
+    .populate('users')
+    .populate('twitters')
+    .catch((error) => console.log(error))
 
-  if(!group) {
+  if (!group) {
     return false
   }
 
@@ -175,7 +196,7 @@ db.Group.update = async (ctx) => { // first time
 db.Group.add = async (ctx) => {
   let group = await db.Group.check(ctx.match[1])
 
-  if(!group) {
+  if (!group) {
     group = new db.Group()
     group.username = ctx.match[1]
     group.users.addToSet(ctx.session.user)

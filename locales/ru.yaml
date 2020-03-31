@@ -27,6 +27,7 @@ twitter:
   edit: Редактировать <i>${screen_name}</i>
   delete: Удалить
   addTo: Добавить в
+  onlyMedia: Только медиа
 
 group:
   toggle_posting: Канал ${group.username}, управление постином

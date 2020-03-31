@@ -9,12 +9,7 @@ let editTwitterButtons
 twitterMenu.enter((ctx) => {
     buttons = [
         Markup.callbackButton(ctx.i18n.t('back'), `back`),
-        Markup.callbackButton('>', '>')
-    ]
-
-    editTwitterButtons = [
-        Markup.callbackButton(ctx.i18n.t('twitter.addTo'), 'twitterAddTo'),
-        Markup.callbackButton(ctx.i18n.t('twitter.delete'), 'twitterDelete')
+        Markup.callbackButton('✖️', '>')
     ]
 
     let twitters = ctx.session.user.twitters.map((v) => {
@@ -31,8 +26,19 @@ twitterMenu.enter((ctx) => {
 })
 
 twitterMenu.action(/manage=(.+)/, async (ctx) => {
-    ctx.answerCbQuery(`Oh, ${ctx.match[1]}! Great choice`).catch((err) => console.log(err))
     let twitter = await ctx.state.db.Twitter.findOne({ id: ctx.match[1] })
+
+    editTwitterButtons = (id = '', settings = {}) => [
+        Markup.callbackButton(ctx.i18n.t('twitter.link') + settings.link ? '✅' : '❌', `link=${id}`),
+        Markup.callbackButton(ctx.i18n.t('twitter.retweets') + settings.retweets ? '✖️' : '✖️', `retweets=${id}`),
+        Markup.callbackButton(ctx.i18n.t('twitter.replies') + settings.replies ? '✖️' : '✖️', `replies=${id}`),
+        Markup.callbackButton(ctx.i18n.t('twitter.images') + settings.images ? '✖️' : '✖️', `images=${id}`),
+        Markup.callbackButton(ctx.i18n.t('twitter.videos') + settings.videos ? '✖️' : '✖️', `videos=${id}`),
+        Markup.callbackButton(ctx.i18n.t('twitter.onlyText') + settings.onlyText ? '✖️' : '✖️', `onlyText=${id}`),
+        Markup.callbackButton(ctx.i18n.t('twitter.onlyMedia') + settings.onlyMedia ? '✅' : '❌', `onlyMedia=${id}`),
+        Markup.callbackButton(ctx.i18n.t('twitter.addTo'), `AddTo=${id}`),
+        Markup.callbackButton(ctx.i18n.t('twitter.delete'), `Delete=${id}`)
+    ]
 
     if (!twitter) {
         ctx.editMessageText(ctx.i18n.t('error'),
@@ -43,11 +49,11 @@ twitterMenu.action(/manage=(.+)/, async (ctx) => {
     ctx.editMessageText(ctx.i18n.t('twitter.edit', {
         screen_name: twitter.screen_name
     }),
-        Markup.inlineKeyboard(editTwitterButtons.concat([
+        Markup.inlineKeyboard(editTwitterButtons(twitter.id, twitter.settings).concat([
             Markup.callbackButton(ctx.i18n.t('back'), `reenter`),
             Markup.callbackButton('>', '>')
         ]), {
-            wrap: (btn, index, currentRow) => currentRow.length === 2 || index === editTwitterButtons.length
+            wrap: (btn, index, currentRow) => currentRow.length === 2 || index === editTwitterButtons().length
         }).extra({ parse_mode: 'HTML' })
         )
 })
@@ -60,12 +66,20 @@ twitterMenu.hears(/twitter.com/, (ctx) => {
                 Markup.callbackButton(ctx.i18n.t('back'), `reenter`),
                 Markup.callbackButton('>', '>')
             ]), {
-                wrap: (btn, index, currentRow) => currentRow.length === 2 || index === editTwitterButtons.length
+                wrap: (btn, index, currentRow) => currentRow.length === 2 || index === editTwitterButtons().length
             }).extra({ parse_mode: 'HTML', reply_to_message_id: ctx.message.message_id }))
         })
         .catch((err) => {
             ctx.reply(`Ошибка: ${err}.`, { reply_to_message_id: ctx.message.message_id })
         })
+})
+
+twitterMenu.action(/(onlyMedia)=(.+)/, async (ctx) => {
+    // let twitter = await ctx.state.db.Twitter.findOne({ id: ctx.match[1] })
+    await ctx.state.db.Twitter.settings(ctx.match[2], ctx.session.currentGroup, ctx.match[1])
+
+    db.Twitter.settings = async (twitter, group, option)
+    ctx.scene.enter('mainMenu')
 })
 
 twitterMenu.action('back', (ctx) => ctx.scene.enter('mainMenu'))
