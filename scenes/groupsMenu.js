@@ -51,6 +51,7 @@ groupsMenu.hears(/(@.+)/, async (ctx) => {
         .then((g) => {
             ctx.reply(`${g.username} Успешно добавлен.`, { reply_to_message_id: ctx.message.message_id })
         })
+        .then(() => ctx.scene.enter('groupsMenu'))
         .catch((err) => {
             ctx.reply(`Ошибка: ${err}.`, { reply_to_message_id: ctx.message.message_id })
         })

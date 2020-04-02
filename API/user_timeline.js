@@ -9,7 +9,7 @@ const auth = require('../OAuth')
 */
 
 module.exports = user_timeline = (screen_name) => {
-    let url = `https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=${screen_name}&count=10`
+    let url = `https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=${screen_name}&count=10&tweet_mode=extended`
     try {
         return got(url, {
             headers: auth(url),

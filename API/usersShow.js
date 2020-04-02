@@ -9,7 +9,7 @@ const auth = require('../OAuth')
  */
 
 module.exports = usersShow = (screen_name) => {
-    let url = `https://api.twitter.com/1.1/users/show.json?screen_name=${screen_name}`
+    let url = `https://api.twitter.com/1.1/users/show.json?screen_name=${screen_name}&tweet_mode=extended`
     try {
         return got(url, {
             headers: auth(url),

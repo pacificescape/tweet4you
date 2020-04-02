@@ -48,7 +48,7 @@ class handleListPolling {
                             newPosts.push({
                                 post,
                                 groups: twitter.groups.map(g => g.group_id ? g.group_id : g.username),
-                                onlyMedia: twitter.onlyMedia || false
+                                settings: twitter.groups.reduce((a, g) => { return { ...a, [g.group_id ? g.group_id : g.username]: g.settings}}, {})
                             })
                         }
                     }
@@ -57,8 +57,8 @@ class handleListPolling {
             })
 
             if (newPosts.length > 0) {
-                newPosts.map(({ post, groups = [], onlyMedia }, i) => {
-                    setTimeout(() => handleSendMessage(this.bot, post, groups, onlyMedia), i*1000)
+                newPosts.map(({ post, groups = [], settings }, i) => {
+                    setTimeout(() => handleSendMessage(this.bot, post, groups, settings), i*2000)
                 })
             }
 

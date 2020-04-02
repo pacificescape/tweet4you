@@ -11,7 +11,7 @@ const list_id = process.env.LIST_ID
  */
 
  module.exports = listStatuses = (list_id) => {
-    let url = `https://api.twitter.com/1.1/lists/statuses.json?list_id=${list_id}`
+    let url = `https://api.twitter.com/1.1/lists/statuses.json?list_id=${list_id}&tweet_mode=extended`
     try {
         return got(url, {
             headers: auth(url),

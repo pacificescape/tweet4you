@@ -38,16 +38,9 @@ const groupSchema = mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Twitter'
   }],
-  settings: [{
-    twitter_id: String,
-    link: { type: Boolean, default: true },
-    retweets: { type: Boolean, default: true },
-    replies: { type: Boolean, default: true },
-    images: { type: Boolean, default: true },
-    videos: { type: Boolean, default: true },
-    onlyText: { type: Boolean, default: false },
-    onlyMedia: { type: Boolean, default: false }
-  }]
+  settings: {
+    type: Object
+  },
 }, {
   timestamps: true
 })

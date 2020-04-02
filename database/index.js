@@ -149,16 +149,19 @@ db.Twitter.activate = async (twitter, group) => {
 
   await db.Group.findByIdAndUpdate(group._id, {
     $push: {
-      twitters: twitter,
+      twitters: twitter
+    },
+    $set: {
       settings: {
-        twitter_id: twitter.id,
-        link: true,
-        retweets: true,
-        replies: true,
-        images: true,
-        videos: true,
-        onlyText: false,
-        onlyMedia: false
+        [twitter.id]: {
+          link: true,
+          retweets: true,
+          replies: true,
+          images: true,
+          videos: true,
+          onlyText: false,
+          onlyMedia: false
+        }
       }
     }
   })
