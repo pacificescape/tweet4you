@@ -155,6 +155,7 @@ db.Twitter.activate = async (twitter, group) => {
       settings: {
         [twitter.id]: {
           link: true,
+          name: true,
           retweets: true,
           replies: true,
           images: true,
@@ -221,6 +222,30 @@ db.Group.add = async (ctx) => {
   return group
 }
 
+
 module.exports = {
   db
 }
+
+
+// let updateSettings = async () => {
+//   let groups = await db.Group.find()
+
+//   groups.forEach((group) => {
+//     Object.keys(group.settings).forEach((t) => {
+//       group.set({ settings: { [t]: {
+//         ...group.settings[t],
+//         link: true,
+//         retweets: true,
+//         replies: true,
+//         images: true,
+//         videos: true,
+//         onlyText: false,
+//         onlyMedia: false
+//        } } })
+//     })
+//     group.save().then((data) => {
+//       console.log(data)
+//     })
+//   })
+// }

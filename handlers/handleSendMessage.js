@@ -8,7 +8,7 @@ const handleSendMessage = async (bot, message, groups, settings) => {
     let medias
     let link //= `https://twitter.com/${message.user.screen_name}` //.replace('\\', '')
     let method = 'sendMessage'//(group, post.text)
-    let extended_entities = message.extended_entities || undefined
+    let extended_entities = message.is_quote_status ? message.quoted_status.extended_entities : message.extended_entities
     let entities = message.entities
     let retweeted_urls = {
         expanded_url: '',
@@ -28,39 +28,9 @@ const handleSendMessage = async (bot, message, groups, settings) => {
 // }
 
     let hashtags = entities.hashtags.map(hash => `#${hash.text}`).join(' ')
-    let urls = entities.urls.map(url => `${url.expanded_url}`).join(' ')
+    let urls = entities.urls //.map(url => `${url.expanded_url}`).join(' ')
 
-    if (extended_entities) {
-        medias = extended_entities.media.map((media, i) => {
-            let type = media.type
-            link = media.url
-            switch (type) {
-                case 'animated_gif':
-                    type = 'animation'
-                case 'video':
-                    media.video_info.variants.find((v) => {
-                        if(v.content_type === "video/mp4") {
-                            media = v.url
-                            return true
-                        }
-                    })
-                    break
-                case 'photo':
-                    media = media.media_url_https.replace('\\', '')
-                    break
-                default:
-                    console.log('extended default return')
-                    return extended_entities.media[0]
-            }
-            text = text.replace(link, '')
-            return {
-                type,
-                media,
-                caption: i === 0 ? media : ''
-            }
-        })
-        medias.filter(e => e)
-    }
+
 
     // TEXT ONLY || ADD POLLINGS
 
@@ -88,22 +58,55 @@ const handleSendMessage = async (bot, message, groups, settings) => {
                 display_url: url.display_url
             }
         }
-        text = text.replace(link, '') + '\n\n' + `<i>${quoted.full_text}</i>`
+        text = text.replace(link, '') + '\n\n' + `<b>${quoted.user.name}</b>:\n` + `<i>${quoted.full_text}</i>`
     }
 
-
-
-
+    if (extended_entities) {
+        medias = extended_entities.media.map((media, i) => {
+            let type = media.type
+            link = media.url
+            switch (type) {
+                case 'animated_gif':
+                    type = 'animation'
+                case 'video':
+                    media.video_info.variants.find((v) => {
+                        if(v.content_type === "video/mp4") {
+                            return media = v.url
+                            // return true
+                        }
+                    })
+                    break
+                case 'photo':
+                    media = media.media_url_https
+                    break
+                default:
+                    console.log('extended default return')
+                    return extended_entities.media[0]
+            }
+            text = text.replace(link, '')
+            return {
+                type,
+                media,
+                caption: i === 0 ? media : ''
+            }
+        })
+        medias.filter(e => e)
+    }
 
     if(!medias) {
         groups.forEach(group => {
             let options = settings[group][message.user.id_str] || {}
-            link = options.link ? link : false // fuu
+            if(options.link) {
+                text = text + `\n\n<i>https://twitter.com/${message.user.screen_name}/status/${message.id_str}</i>`
+            }
 
+            if(options.name) {
+                text = `Twitter <b>${message.user.name}</b>:\n\n` + text
+            }
 
-            bot.telegram[method](group, `${text}${link ? `\n<a href="${link}">link</a>` : ''}`, {
+            bot.telegram[method](group, text, {
                 parse_mode: 'HTML',
-                disable_web_page_preview: !link
+                disable_web_page_preview: link && !message.entities.urls[0]
             })
         })
         return
@@ -134,16 +137,20 @@ const handleSendMessage = async (bot, message, groups, settings) => {
     //     link = `https://twitter.com/${message.user.screen_name}`
     // }
     // let group = groups.shift()
+
     groups.forEach((group, i) => {
         let options = settings[group][message.user.id_str] || {}
         link = options.link ? link : false // fuu
+        if(options.name) {
+            text = `Twitter <b>${message.user.name}</b>:\n` + text
+        }
 
         setTimeout(() => {
             medias[0].caption = `${text}${link && !retweeted ? `\n\n<a href="${link}">link</a>` : ''}`
             medias[0].parse_mode = 'HTML'
 
             bot.telegram[method](group, medias, {
-                caption: `${text}\n\n<a href="${link}">link</a>`,
+                caption: `${text}\n\nTweet <a href="${link}">${message.user.name}</a>`,
                 parse_mode: 'HTML',
                 disable_web_page_preview: !link
             })
@@ -157,3 +164,6 @@ const handleSendMessage = async (bot, message, groups, settings) => {
 }
 
 module.exports = handleSendMessage
+
+
+// вычесть из ответа quoted_status_permalink.url
