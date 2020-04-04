@@ -94,7 +94,7 @@ class Message {
     }
 
     text = text.join('')
-    this.preview = !text.indexOf(/https:\/\/t.co/) > -1 // ???
+    this.preview = !text.indexOf('https://t.co') > -1 // ???
 
     return text
   }
