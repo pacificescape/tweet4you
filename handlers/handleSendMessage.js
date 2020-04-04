@@ -80,13 +80,13 @@ class Message {
       text[0] = `${this.settings.name ? `<b> ${this.tweet.user.name}</b>: ` : ''}`
       text[1] = `${textTw ? `\n\n${textTw}\n\n` : ''}`
       text[2] = `${textQuo ? `${this.tweet.quoted_status.user.name}:\n\n<i>${textQuo}</i>\n` : ''}`
-      text[3] = `${this.settings.link ? `<a href="${this.linkMyself()}">link</a>` : ''}`
+      text[3] = `${this.settings.link ? `<a href="${this.linkMyself()}">${this.linkMyself()}</a>` : ''}`
     } else if (this.tweet.retweeted_status) {
       text[0] = `${this.settings.name ? this.tweet.user.name + ' ' : ''}`
       text[1] = '#retweet '
       text[2] = `${this.settings.from ? `from ${this.tweet.retweeted_status.user.name}` : ''}`
       text[3] = `${textRt ? '\n\n' + textRt + '\n' : ''}`
-      text[4] = `${this.settings.link ? `<a href="${this.linkMyself()}">link</a>` : ''}`
+      text[4] = `${this.settings.link ? `<a href="${this.linkMyself()}">${this.linkMyself()}</a>` : ''}`
     } else {
       text[0] = `${this.settings.name ? `<b> ${this.tweet.user.name}</b>: ` : ''}`
       text[1] = `${textTw ? `\n\n${textTw}\n\n` : ''}`
@@ -101,7 +101,7 @@ class Message {
 
   getMedia () {
     const extendedEntities = this.tweet.is_quote_status ? this.tweet.quoted_status.extended_entities : this.tweet.extended_entities
-    let medias = []
+    let medias = ''
 
     if (extendedEntities) {
       medias = extendedEntities.media.map((media, i) => {
@@ -138,7 +138,7 @@ class Message {
 
     if (medias.length === 1) {
       this.type = medias[0].type
-      medias = medias[0].media
+      return medias[0].media
     }
 
     return medias
@@ -146,7 +146,7 @@ class Message {
 
   getMethod () {
     let method = 'sendMessage'
-    if (this.media.length > 1) {
+    if (Array.isArray(this.media)) {
       method = 'sendMediaGroup' // (chatId, media, [extra])
     } else {
       switch (this.type) {
