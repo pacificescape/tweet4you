@@ -100,7 +100,9 @@ class Message {
   }
 
   getMedia () {
-    const extendedEntities = this.tweet.is_quote_status ? this.tweet.quoted_status.extended_entities : this.tweet.extended_entities
+    let extendedEntities = this.tweet.is_quote_status ? this.tweet.quoted_status.extended_entities : this.tweet.extended_entities
+    extendedEntities = this.tweet.retweeted_status ? this.tweet.retweeted_status.extended_entities : extendedEntities
+    extendedEntities = this.tweet.extended_entities ? this.tweet.extended_entities : extendedEntities
     let medias = ''
 
     if (extendedEntities) {
