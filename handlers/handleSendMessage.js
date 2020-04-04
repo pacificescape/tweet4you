@@ -1,169 +1,168 @@
-const Markup = require('telegraf/markup')
+const handleSendMessage = async (bot, tweet, groups, settings) => {
+  groups.forEach((group, i) => {
+    const setting = settings[group][tweet.user.id_str] || {}
 
-const handleSendMessage = async (bot, message, groups, settings) => {
-    let text = message.full_text
-    let quoted_text = ''
-    let retweeted = message.retweeted_status
-    let quoted = message.quoted_status
-    let medias
-    let link //= `https://twitter.com/${message.user.screen_name}` //.replace('\\', '')
-    let method = 'sendMessage'//(group, post.text)
-    let extended_entities = message.is_quote_status ? message.quoted_status.extended_entities : message.extended_entities
-    let entities = message.entities
-    let retweeted_urls = {
-        expanded_url: '',
-        display_url: ''
-    }
+    let message = new Message(tweet, setting)
 
-// ['text_link', ({ url }) => tag('a', { href: url })]
-
-//     "entities":
-// {
-//     "hashtags":[],
-//     "urls":[], //expanded_url
-//     "user_mentions":[],
-//     "media":[],
-//     "symbols":[]
-//     "polls":[]
-// }
-
-    let hashtags = entities.hashtags.map(hash => `#${hash.text}`).join(' ')
-    let urls = entities.urls //.map(url => `${url.expanded_url}`).join(' ')
-
-
-
-    // TEXT ONLY || ADD POLLINGS
-
-    if (retweeted) {
-        if (retweeted.entities.urls[0]) {
-            // <a href="${retweeted_urls.expanded_url}">${retweeted_urls.display_url}</a>
-            let url = retweeted.entities.urls[0]
-            retweeted_urls = {
-                expanded_url: url.expanded_url,
-                display_url: url.display_url
-            }
+    setTimeout(() => {
+      try {
+        if (message.method === 'sendMessage') {
+          bot.telegram[message.method](group, message.text, {
+            parse_mode: 'HTML',
+            disable_web_page_preview: message.preview
+          })
+        } else {
+          bot.telegram[message.method](group, message.media, {
+            caption: message.text,
+            parse_mode: 'HTML',
+            disable_web_page_preview: message.preview
+          })
         }
-        let tweetLink = `<a href="https://twitter.com/${retweeted.user.screen_name}/status/${retweeted.id_str}">${retweeted.user.name}</a>`
+      } catch (error) {
+        console.log(error)
+      }
+      message = null
+    }, i * 1000)
+  })
+}
 
-        text = `#retweet ${message.user.name} — from ${tweetLink}\n\n` + retweeted.full_text.replace(link, '')
+class Message {
+  constructor (tweet, settings) {
+    this.tweet = tweet
+    this.preview = true
+    this.settings = settings
+    this.text = this.getText()
+    this.media = this.getMedia()
+    this.method = this.getMethod()
+  }
+
+  deleteLinks (text) {
+    const links = []
+    const retweet = this.tweet.retweeted_status
+    const quote = this.tweet.quoted_status
+
+    if (this.tweet.entities.media) {
+      this.tweet.entities.media.forEach(m => links.push(m.url))
     }
 
-    if(quoted) {
-        link = message.quoted_status_permalink.url
-        if (quoted.entities.urls[0]) {
-            // <a href="${retweeted_urls.expanded_url}">${retweeted_urls.display_url}</a>
-            let url = quoted.entities.urls[0]
-            retweeted_urls = {
-                expanded_url: url.expanded_url,
-                display_url: url.display_url
-            }
-        }
-        text = text.replace(link, '') + '\n\n' + `<b>${quoted.user.name}</b>:\n` + `<i>${quoted.full_text}</i>`
+    if (retweet && retweet.entities.media) {
+      links.push(retweet.entities.media[0].url)
     }
 
-    if (extended_entities) {
-        medias = extended_entities.media.map((media, i) => {
-            let type = media.type
-            link = media.url
-            switch (type) {
-                case 'animated_gif':
-                    type = 'animation'
-                case 'video':
-                    media.video_info.variants.find((v) => {
-                        if(v.content_type === "video/mp4") {
-                            return media = v.url
-                            // return true
-                        }
-                    })
-                    break
-                case 'photo':
-                    media = media.media_url_https
-                    break
-                default:
-                    console.log('extended default return')
-                    return extended_entities.media[0]
-            }
-            text = text.replace(link, '')
-            return {
-                type,
-                media,
-                caption: i === 0 ? media : ''
-            }
-        })
-        medias.filter(e => e)
+    if (quote) {
+      links.push(this.tweet.quoted_status_permalink.url)
     }
 
-    if(!medias) {
-        groups.forEach(group => {
-            let options = settings[group][message.user.id_str] || {}
-            if(options.link) {
-                text = text + `\n\n<i>https://twitter.com/${message.user.screen_name}/status/${message.id_str}</i>`
-            }
-
-            if(options.name) {
-                text = `Twitter <b>${message.user.name}</b>:\n\n` + text
-            }
-
-            bot.telegram[method](group, text, {
-                parse_mode: 'HTML',
-                disable_web_page_preview: link && !message.entities.urls[0]
-            })
-        })
-        return
+    if (quote && quote.quoted_status.entities.media) {
+      links.push(quote.quoted_status.entities.media[0].url)
     }
 
-    // >=1 MEDIA
+    links.filter(e => e).forEach(link => { text = text.replace(link, '') })
 
-    if(medias.length > 1) {
-        method = 'sendMediaGroup' //(chatId, media, [extra])
+    return text.trim()
+  }
+
+  linkMyself () {
+    return `https://twitter.com/${this.tweet.user.screen_name}/status/${this.tweet.id_str}`
+  }
+
+  getText () {
+    if (this.settings.onlyMedia) {
+      return ''
+    }
+
+    let text = []
+    const textTw = this.deleteLinks(this.tweet.full_text)
+    const textQuo = this.deleteLinks(this.tweet.is_quote_status ? this.tweet.quoted_status.full_text : '')
+    const textRt = this.deleteLinks(this.tweet.retweeted_status ? this.tweet.retweeted_status.full_text : '')
+
+    if (this.tweet.quoted_status) {
+      text[0] = `${this.settings.name ? `<b> ${this.tweet.user.name}</b>: ` : ''}`
+      text[1] = `${textTw ? `\n\n${textTw}\n\n` : ''}`
+      text[2] = `${textQuo ? `${this.tweet.quoted_status.user.name}:\n\n<i>${textQuo}</i>\n` : ''}`
+      text[3] = `${this.settings.link ? `<a href="${this.linkMyself()}">link</a>` : ''}`
+    } else if (this.tweet.retweeted_status) {
+      text[0] = `${this.settings.name ? this.tweet.user.name + ' ' : ''}`
+      text[1] = '#retweet '
+      text[2] = `${this.settings.from ? `from ${this.tweet.retweeted_status.user.name}` : ''}`
+      text[3] = `${textRt ? '\n\n' + textRt + '\n' : ''}`
+      text[4] = `${this.settings.link ? `<a href="${this.linkMyself()}">link</a>` : ''}`
     } else {
-        medias = medias[0]
-
-        switch (medias.type) {
-            case 'photo':
-                method = 'sendPhoto'//(chatId, photo, [extra])
-                break
-            case 'animation':
-                method = 'sendAnimation'//(chatId, animation, [extra])
-                break
-            case 'video':
-                method = 'sendVideo'//(chatId, question, options, [extra])
-                break
-        }
-        medias = medias.media
+      text[0] = `${this.settings.name ? `<b> ${this.tweet.user.name}</b>: ` : ''}`
+      text[1] = `${textTw ? `\n\n${textTw}\n\n` : ''}`
+      text[2] = `${this.settings.link ? `<a href="${this.linkMyself()}">${this.linkMyself()}</a>` : ''}`
     }
 
-    // if(!link) {
-    //     link = `https://twitter.com/${message.user.screen_name}`
-    // }
-    // let group = groups.shift()
+    text = text.join('')
+    this.preview = !text.indexOf(/https:\/\/t.co/) > -1 // ???
 
-    groups.forEach((group, i) => {
-        let options = settings[group][message.user.id_str] || {}
-        link = options.link ? link : false // fuu
-        if(options.name) {
-            text = `Twitter <b>${message.user.name}</b>:\n` + text
-        }
+    return text
+  }
 
-        setTimeout(() => {
-            medias[0].caption = `${text}${link && !retweeted ? `\n\n<a href="${link}">link</a>` : ''}`
-            medias[0].parse_mode = 'HTML'
+  getMedia () {
+    const extendedEntities = this.tweet.is_quote_status ? this.tweet.quoted_status.extended_entities : this.tweet.extended_entities
+    let medias = []
 
-            bot.telegram[method](group, medias, {
-                caption: `${text}\n\nTweet <a href="${link}">${message.user.name}</a>`,
-                parse_mode: 'HTML',
-                disable_web_page_preview: !link
+    if (extendedEntities) {
+      medias = extendedEntities.media.map((media, i) => {
+        let type = media.type
+        switch (type) {
+          case 'animated_gif':
+            type = 'animation'
+            break
+          case 'video':
+            media.video_info.variants.find((v) => {
+              if (v.content_type === 'video/mp4') {
+                media = v.url
+              }
             })
-        }, i*1000)
-    });
+            break
+          case 'photo':
+            media = media.media_url_https
+            break
+          default:
+            console.log('extended default return')
+            return extendedEntities.media[0]
+        }
+        return {
+          type,
+          media
+        }
+      }).filter(e => e)
 
-    // groups.map((group) => {
-    //     method(group, )
-    // })
+      if (medias[0]) {
+        medias[0].caption = this.text
+        medias[0].parse_mode = 'HTML'
+      }
+    }
 
+    if (medias.length === 1) {
+      this.type = medias[0].type
+      medias = medias[0].media
+    }
+
+    return medias
+  }
+
+  getMethod () {
+    let method = 'sendMessage'
+    if (this.media.length > 1) {
+      method = 'sendMediaGroup' // (chatId, media, [extra])
+    } else {
+      switch (this.type) {
+        case 'photo':
+          method = 'sendPhoto'// (chatId, photo, [extra])
+          break
+        case 'animation':
+          method = 'sendAnimation'// (chatId, animation, [extra])
+          break
+        case 'video':
+          method = 'sendVideo'// (chatId, question, options, [extra])
+          break
+      }
+    }
+    return method
+  }
 }
 
 module.exports = handleSendMessage
-
-
-// вычесть из ответа quoted_status_permalink.url

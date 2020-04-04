@@ -3,12 +3,11 @@ const connection = require('./connection')
 const { usersShow } = require('../API')
 const parseLink = require('../helpers/parseLink')
 const { handleAddToList } = require('../handlers')
-let list_id = process.env.LIST_ID
+const list_id = process.env.LIST_ID
 
 const db = {
   connection
 }
-
 
 Object.keys(collections).forEach((collectionName) => {
   db[collectionName] = connection.model(collectionName, collections[collectionName])
@@ -17,7 +16,7 @@ Object.keys(collections).forEach((collectionName) => {
 // User methods
 
 db.User.check = async (telegram_id) => {
-  let user = await db.User.findOne({ telegram_id })
+  const user = await db.User.findOne({ telegram_id })
     .populate('twitters')
     .populate('groups')
 
@@ -48,14 +47,14 @@ db.User.update = async (ctx) => {
 }
 
 db.Twitter.check = async (ctx) => {
-  let link = parseLink(ctx.message.text)
+  const link = parseLink(ctx.message.text)
 
   if (!link) {
     throw 'Wrong link'
   }
-  let user = await usersShow(link)
+  const user = await usersShow(link)
 
-  let twitter = await db.Twitter.findOne({ id: user.id })
+  const twitter = await db.Twitter.findOne({ id: user.id })
     .populate('users')
     .populate('groups')
     .catch((error) => console.log(error))
@@ -66,13 +65,13 @@ db.Twitter.check = async (ctx) => {
   }
 
   return twitter
-} //ratelimit
+} // ratelimit
 
 db.Twitter.upToDate = async (ctx) => {
-  let fetched_tw = await db.Twitter.check(ctx)
+  const fetched_tw = await db.Twitter.check(ctx)
 
   if (fetched_tw.error) {
-    twitter = new db.Twitter()
+    let twitter = new db.Twitter()
 
     twitter.counter = 0
     twitter.screen_name = fetched_tw.screen_name
@@ -102,15 +101,13 @@ db.Twitter.upToDate = async (ctx) => {
   // let tw_save = await fetched_tw.save().catch((error) => console.log(ctx.session.user.username, error))
   // console.log('tw_save: ', tw_save)
 
-  let old_tw = ctx.session.user.twitters.reduce((a, v) => v.id === fetched_tw.id ? true : false, false)
+  const old_tw = ctx.session.user.twitters.reduce((a, v) => v.id === fetched_tw.id, false)
 
-  let add_twitter = !old_tw ? ctx.session.user.twitters.addToSet(fetched_tw) : null
+  const add_twitter = !old_tw ? ctx.session.user.twitters.addToSet(fetched_tw) : null
   console.log('add twitter: ', add_twitter)
 
-  let user_save = await ctx.session.user.save().catch((error) => console.log(ctx.session.user.username, error))
+  const user_save = await ctx.session.user.save().catch((error) => console.log(ctx.session.user.username, error))
   console.log(user_save)
-
-  return
 }
 
 db.Twitter.deactivate = async (twitter, group) => {
@@ -130,7 +127,7 @@ db.Twitter.deactivate = async (twitter, group) => {
 }
 
 db.Twitter.settings = async (twitter_id, group_id, option) => {
-  let group = await db.Group.findById(group_id)
+  const group = await db.Group.findById(group_id)
 
   group.settings.forEach((set) => {
     if (set.twitter_id === twitter_id) {
@@ -157,6 +154,7 @@ db.Twitter.activate = async (twitter, group) => {
           link: true,
           name: true,
           retweets: true,
+          from: true,
           replies: true,
           images: true,
           videos: true,
@@ -177,7 +175,7 @@ db.Group.check = async (username) => {
     throw 'Wrong username'
   }
 
-  let group = await db.Group.findOne({ username })
+  const group = await db.Group.findOne({ username })
     .populate('users')
     .populate('twitters')
     .catch((error) => console.log(error))
@@ -190,7 +188,7 @@ db.Group.check = async (username) => {
 }
 
 db.Group.update = async (ctx) => { // first time
-  let group = await db.Group.check(ctx.match[1])
+  const group = await db.Group.check(ctx.match[1])
 
   group.telegram_id = ctx.chat.id
   group.first_name = ctx.chat.title || ''
@@ -208,7 +206,7 @@ db.Group.add = async (ctx) => {
     await group.save().catch((err) => console.log(err))
   }
 
-  let newbie = group.users.reduce((a, v) => v.id === group.id ? false : true, true)
+  const newbie = group.users.reduce((a, v) => v.id !== group.id, true)
 
   if (newbie) {
     group.users.addToSet(ctx.session.user)
@@ -222,30 +220,35 @@ db.Group.add = async (ctx) => {
   return group
 }
 
-
-module.exports = {
-  db
-}
-
-
-// let updateSettings = async () => {
-//   let groups = await db.Group.find()
+// const updateSettings = async () => {
+//   const groups = await db.Group.find()
 
 //   groups.forEach((group) => {
 //     Object.keys(group.settings).forEach((t) => {
-//       group.set({ settings: { [t]: {
-//         ...group.settings[t],
-//         link: true,
-//         retweets: true,
-//         replies: true,
-//         images: true,
-//         videos: true,
-//         onlyText: false,
-//         onlyMedia: false
-//        } } })
+//       group.set({
+//         settings: {
+//           [t]: {
+//             ...group.settings[t],
+//             from: true
+//             // link: true,
+//             // retweets: true,
+//             // replies: true,
+//             // images: true,
+//             // videos: true,
+//             // onlyText: false,
+//             // onlyMedia: false
+//           }
+//         }
+//       })
 //     })
 //     group.save().then((data) => {
 //       console.log(data)
 //     })
 //   })
 // }
+
+// updateSettings()
+
+module.exports = {
+  db
+}
