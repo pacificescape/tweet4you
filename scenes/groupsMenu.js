@@ -40,10 +40,10 @@ groupsMenu.enter((ctx) => {
 //     // await ctx.answerCbQuery(`Oh, ${ctx.match}! Great choice`).catch((err) => console.log(err))
 // })
 
-groupsMenu.hears(/(@.+)/, async (ctx) => {
-  console.log(ctx.match)
-  //   const ad = await isAdmin(ctx, ctx.match[1])
-  //   const chat = await ctx.getChat(ctx.match[1])
+groupsMenu.hears(/t.me\/(.+)|@(.+)/, async (ctx) => {
+  console.log('match: ', ctx.match)
+
+  ctx.match = ctx.match.filter(e => e)
 
   ctx.state.db.Group.add(ctx)
     .then((g) => {
@@ -55,38 +55,11 @@ groupsMenu.hears(/(@.+)/, async (ctx) => {
     })
 })
 
-// Open group
+// OPEN GROUP
 
-groupsMenu.action(/group=(.+)/, async (ctx) => {
-  const buttons = [
-    Markup.callbackButton(ctx.i18n.t('back'), 'group'),
-    Markup.callbackButton(ctx.i18n.t('delete'), 'delete')
-  ]
-
-  const group = ctx.session.user.groups[ctx.match[1]]
-
+groupsMenu.action(/group=(.+)/, (ctx) => {
   ctx.session.group = ctx.match[1]
-
-  const getGroup = (v, u) => v.groups.reduce((a, c) => c.username === u ? true : a, false)
-
-  await ctx.session.user.twitters.forEach(v => v.populate('groups'))
-
-  const twitters = ctx.session.user.twitters.map((v, i) => {
-    const enabled = getGroup(v, group.username)
-    return Markup.callbackButton(`${v.screen_name} ${enabled ? '✅' : '❌'}`, `${enabled ? `deactivate=${i}` : `activate=${i}`}`)
-  })
-
-  // let manage = group.twitters.map((v) => Markup.callbackButton(v.screen_name, `manage=${v.screen_name}`))
-  // `Канал ${group.username}, включить постинг:`
-  ctx.editMessageText(ctx.i18n.t('toggle_posting', {
-    username: group.username
-  }),
-  Markup.inlineKeyboard(twitters.concat(buttons), {
-    wrap: (btn, index, currentRow) => {
-      return currentRow.length === 2 || index === twitters.length
-    }
-  }).extra({ parse_mode: 'HTML' })
-  )
+  showTwitters(ctx)
 })
 
 groupsMenu.action(/deactivate=(.+)/, async (ctx) => {
@@ -110,7 +83,7 @@ groupsMenu.action(/deactivate=(.+)/, async (ctx) => {
 
   ctx.session.user = await ctx.state.db.User.update(ctx)
 
-  ctx.scene.enter('groupsMenu')
+  showTwitters(ctx)
 })
 
 groupsMenu.action(/activate=(.+)/, async (ctx) => {
@@ -121,11 +94,38 @@ groupsMenu.action(/activate=(.+)/, async (ctx) => {
 
   ctx.session.user = await ctx.state.db.User.update(ctx)
 
-  ctx.scene.enter('groupsMenu')
+  showTwitters(ctx)
 })
 
 groupsMenu.action('main', (ctx) => ctx.scene.enter('mainMenu'))
 groupsMenu.action('group', (ctx) => ctx.scene.enter('groupsMenu'))
 groupsMenu.action('delete', (ctx) => ctx.reply('\\(\'>\')/'))
 
+async function showTwitters (ctx) {
+  const buttons = [
+    Markup.callbackButton(ctx.i18n.t('back'), 'group'),
+    Markup.callbackButton(ctx.i18n.t('delete'), 'delete')
+  ]
+
+  const group = ctx.session.user.groups[ctx.session.group]
+
+  const getGroup = (v, u) => v.groups.reduce((a, c) => c.username === u ? true : a, false)
+
+  await ctx.session.user.twitters.forEach(v => v.populate('groups'))
+
+  const twitters = ctx.session.user.twitters.map((v, i) => {
+    const enabled = getGroup(v, group.username)
+    return Markup.callbackButton(`${v.screen_name} ${enabled ? '✅' : '❌'}`, `${enabled ? `deactivate=${i}` : `activate=${i}`}`)
+  })
+
+  ctx.editMessageText(ctx.i18n.t('toggle_posting', {
+    username: group.username
+  }),
+  Markup.inlineKeyboard(twitters.concat(buttons), {
+    wrap: (btn, index, currentRow) => {
+      return currentRow.length === 2 || index === twitters.length
+    }
+  }).extra({ parse_mode: 'HTML' })
+  )
+}
 module.exports = groupsMenu

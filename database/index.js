@@ -1,4 +1,4 @@
-const collections = require('./models') //
+const collections = require('./models')
 const connection = require('./connection')
 const { usersShow } = require('../API')
 const parseLink = require('../helpers/parseLink')
@@ -153,7 +153,7 @@ db.Twitter.activate = async (twitter, group) => {
 
   console.log(gr)
 
-  // return await handleAddToList(listId, twitter.id).catch((err) => console.log(err))
+  return await handleAddToList(listId, twitter.id).catch((err) => console.log(err))
 }
 
 // Group methods

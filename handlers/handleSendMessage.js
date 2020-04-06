@@ -55,6 +55,10 @@ class Message {
       this.tweet.entities.media.forEach(m => links.push(m.url))
     }
 
+    if (this.reply && this.reply.entities.media) {
+      this.reply.entities.media.forEach(m => links.push(m.url))
+    }
+
     if (retweet && retweet.entities.media) {
       links.push(retweet.entities.media[0].url)
     }
@@ -83,12 +87,14 @@ class Message {
 
     if (this.tweet.in_reply_to_status_id_str) {
       this.reply = await statusesShow(this.tweet.in_reply_to_status_id_str)
-        .then((tw) => {
-          return {
-            full_text: tw.full_text,
-            name: tw.user.name
-          }
-        }).catch((error) => { console.log(error) })
+        .catch((error) => { console.log(error) })
+    }
+
+    if (this.reply) {
+      this.reply = {
+        full_text: this.deleteLinks(this.reply.full_text),
+        name: this.reply.user.name
+      }
     }
 
     let text = []
@@ -98,7 +104,7 @@ class Message {
 
     text.push(`${this.reply ? `#reply\n<b>${this.reply.name}</b>:\n${this.reply.full_text}\n\n⬇\n\n` : ''}`)
 
-    const reply = this.reply ? '' : '\n' // ???????
+    const reply = this.reply ? '' : '\n'
     const linkToPost = this.linkMyself()
 
     if (this.tweet.quoted_status) {
