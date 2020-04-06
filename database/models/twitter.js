@@ -1,6 +1,5 @@
 const mongoose = require('mongoose')
 
-
 const twitterSchema = mongoose.Schema({
   screen_name: String,
   name: String,
@@ -24,8 +23,7 @@ const twitterSchema = mongoose.Schema({
   locale: String,
   counter: Number
 }, {
-  timestamps: true,
+  timestamps: true
 })
-
 
 module.exports = twitterSchema

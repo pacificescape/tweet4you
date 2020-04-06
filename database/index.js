@@ -132,28 +132,28 @@ db.Twitter.activate = async (twitter, group) => {
     }
   })
 
-  await db.Group.findByIdAndUpdate(group._id, {
+  const gr = await db.Group.findByIdAndUpdate(group._id, {
     $push: {
       twitters: twitter
     },
     $set: {
-      settings: {
-        [twitter.id]: {
-          link: true,
-          name: true,
-          retweets: true,
-          from: true,
-          replies: true,
-          images: true,
-          videos: true,
-          onlyText: false,
-          onlyMedia: false
-        }
+      ['settings.' + twitter.id]: {
+        link: true,
+        name: true,
+        retweets: true,
+        from: true,
+        replies: true,
+        images: true,
+        videos: true,
+        onlyText: false,
+        onlyMedia: false
       }
     }
   })
 
-  return await handleAddToList(listId, twitter.id).catch((err) => console.log(err))
+  console.log(gr)
+
+  // return await handleAddToList(listId, twitter.id).catch((err) => console.log(err))
 }
 
 // Group methods
