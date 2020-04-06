@@ -1,5 +1,5 @@
 const { listMembersCreate } = require('../API')
 
-module.exports = (list_id, user_id) => {
-    return listMembersCreate(list_id, user_id)
+module.exports = (listId, userId) => {
+  return listMembersCreate(listId, userId)
 }

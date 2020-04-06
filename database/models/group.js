@@ -21,8 +21,8 @@ const groupSchema = mongoose.Schema({
     default: false
   },
   users: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }],
   stats: {
     tweetsCount: {
@@ -35,18 +35,17 @@ const groupSchema = mongoose.Schema({
     }
   },
   twitters: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Twitter'
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Twitter'
   }],
   settings: {
     type: Object
-  },
+  }
 }, {
   timestamps: true
 })
 
 module.exports = groupSchema
-
 
 // create: {
 //   type: Boolean,

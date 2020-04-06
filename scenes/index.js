@@ -1,5 +1,4 @@
 const Stage = require('telegraf/stage')
-const channelsScene = require('telegraf/stage')
 const mainMenu = require('./mainMenu')
 const groupsMenu = require('./groupsMenu')
 const twitterMenu = require('./twitterMenu')

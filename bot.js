@@ -9,7 +9,7 @@ const {
 } = require('./middlewares')
 const menu = require('./scenes')
 const {
-  handleListPolling,
+  ListPolling,
   //  handleTwitterPolling,
   sendInvite
 } = require('./handlers')
@@ -17,9 +17,7 @@ const {
   isAdmin
 } = require('./helpers')
 
-const { listShow } = require('./API')
-
-const { handleAddToList } = require('./handlers')
+// const { listShow } = require('./API')
 
 global.startDate = new Date()
 
@@ -63,7 +61,7 @@ bot.use(async (ctx, next) => {
 
 bot.use(menu)
 
-const list = new handleListPolling(bot, db) // вынести в отдельный файл
+const list = new ListPolling(bot, db) // вынести в отдельный файл
 
 bot.command('fs', owner, () => list.job.start())
 bot.command('f', owner, () => list.job.stop())

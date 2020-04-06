@@ -1,8 +1,14 @@
+const { statusesShow } = require('../API')
+
 const handleSendMessage = async (bot, tweet, groups, settings) => {
-  groups.forEach((group, i) => {
+  groups.forEach(async (group, i) => {
     const setting = settings[group][tweet.user.id_str] || {}
 
-    let message = new Message(tweet, setting)
+    let message = await new Message(tweet, setting)
+
+    if (message.trash) {
+      return
+    }
 
     setTimeout(() => {
       try {
@@ -28,12 +34,16 @@ const handleSendMessage = async (bot, tweet, groups, settings) => {
 
 class Message {
   constructor (tweet, settings) {
-    this.tweet = tweet
-    this.preview = true
-    this.settings = settings
-    this.text = this.getText()
-    this.media = this.getMedia()
-    this.method = this.getMethod()
+    return (async () => {
+      this.tweet = tweet
+      this.preview = true
+      this.settings = settings
+      this.text = await this.getText()
+      this.media = this.getMedia()
+      this.method = this.getMethod()
+      this.trash = false
+      return this
+    })()
   }
 
   deleteLinks (text) {
@@ -66,9 +76,19 @@ class Message {
     return `https://twitter.com/${this.tweet.user.screen_name}/status/${this.tweet.id_str}`
   }
 
-  getText () {
+  async getText () {
     if (this.settings.onlyMedia) {
       return ''
+    }
+
+    if (this.tweet.in_reply_to_status_id_str) {
+      this.reply = await statusesShow(this.tweet.in_reply_to_status_id_str)
+        .then((tw) => {
+          return {
+            full_text: tw.full_text,
+            name: tw.user.name
+          }
+        }).catch((error) => { console.log(error) })
     }
 
     let text = []
@@ -76,21 +96,26 @@ class Message {
     const textQuo = this.deleteLinks(this.tweet.is_quote_status ? this.tweet.quoted_status.full_text : '')
     const textRt = this.deleteLinks(this.tweet.retweeted_status ? this.tweet.retweeted_status.full_text : '')
 
+    text.push(`${this.reply ? `#reply\n<b>${this.reply.name}</b>:\n${this.reply.full_text}\n\n⬇\n\n` : ''}`)
+
+    const reply = this.reply ? '' : '\n' // ???????
+    const linkToPost = this.linkMyself()
+
     if (this.tweet.quoted_status) {
-      text[0] = `${this.settings.name ? `<b> ${this.tweet.user.name}</b>: ` : ''}`
-      text[1] = `${textTw ? `\n\n${textTw}\n\n` : ''}`
-      text[2] = `${textQuo ? `${this.tweet.quoted_status.user.name}:\n\n<i>${textQuo}</i>\n` : ''}`
-      text[3] = `${this.settings.link ? `<a href="${this.linkMyself()}">${this.linkMyself()}</a>` : ''}`
+      text.push(`${this.settings.name ? `<b> ${this.tweet.user.name}</b>: ` : ''}`)
+      text.push(`${textTw ? `${reply}\n${textTw}\n\n` : ''}`)
+      text.push(`${textQuo ? `${this.tweet.quoted_status.user.name}:\n\n<i>${textQuo}</i>\n` : ''}`)
+      text.push(`${this.settings.link ? `<a href="${linkToPost}">${linkToPost}...</a>` : ''}`)
     } else if (this.tweet.retweeted_status) {
-      text[0] = `${this.settings.name ? this.tweet.user.name + ' ' : ''}`
-      text[1] = '#retweet '
-      text[2] = `${this.settings.from ? `from ${this.tweet.retweeted_status.user.name}` : ''}`
-      text[3] = `${textRt ? '\n\n' + textRt + '\n' : ''}`
-      text[4] = `${this.settings.link ? `<a href="${this.linkMyself()}">${this.linkMyself()}</a>` : ''}`
+      text.push(`${this.settings.name ? this.tweet.user.name + ' ' : ''}`)
+      text.push('#retweet ')
+      text.push(`${this.settings.from ? `from ${this.tweet.retweeted_status.user.name}` : ''}`)
+      text.push(`${textRt ? `${reply}\n` + textRt + '\n' : ''}`)
+      text.push(`${this.settings.link ? `<a href="${linkToPost}">${linkToPost}</a>` : ''}`)
     } else {
-      text[0] = `${this.settings.name ? `<b> ${this.tweet.user.name}</b>: ` : ''}`
-      text[1] = `${textTw ? `\n\n${textTw}\n\n` : ''}`
-      text[2] = `${this.settings.link ? `<a href="${this.linkMyself()}">${this.linkMyself()}</a>` : ''}`
+      text.push(`${this.settings.name ? `<b>${this.tweet.user.name}</b>: ` : ''}`)
+      text.push(`${textTw ? `${reply}\n${textTw}\n\n` : ''}`)
+      text.push(`${this.settings.link ? `<a href="${linkToPost}">${linkToPost}</a>` : ''}`)
     }
 
     text = text.join('')

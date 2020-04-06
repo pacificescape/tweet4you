@@ -24,10 +24,17 @@ no_admin: Вы не являетесь администратором.
 delete: Удалить
 
 twitter:
-  edit: Редактировать <i>${screen_name}</i>
+  link: Ссылка
+  name: Имя
+  retweets: Ретвиты
+  replies: Реплаи
+  images: Картинки
+  videos: Видео
+  edit: Редактировать <i>${screen_name}</i> в ${group_name}
   delete: Удалить
   addTo: Добавить в
   onlyMedia: Только медиа
+  onlyText: Только текст
 
 group:
   toggle_posting: Канал ${group.username}, управление постином

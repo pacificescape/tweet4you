@@ -1,5 +1,5 @@
 const CronJob = require('cron').CronJob
-const { user_timeline } = require('../API')
+const { user_timeline: userTimeline } = require('../API')
 
 /**
  *
@@ -8,8 +8,8 @@ const { user_timeline } = require('../API')
  *
 */
 
-function handleTwitterPolling (bot, db, twitter_name) {
-  db.Twitter.findOne({ screen_name: twitter_name })
+function handleTwitterPolling (bot, db, twitterName) {
+  db.Twitter.findOne({ screen_name: twitterName })
     .then((twitter) => {
       if (!twitter) return
 
@@ -26,11 +26,11 @@ function handleTwitterPolling (bot, db, twitter_name) {
 
 handleTwitterPolling.prototype.cronPolling = async function () {
   try {
-    const posts = await user_timeline(this.twitter.screen_name, 10)
+    const posts = await userTimeline(this.twitter.screen_name, 10)
     const newPosts = []
 
     for (const post of posts) {
-      if (post.id == this.twitter.last_status.id) {
+      if (post.id === this.twitter.last_status.id) {
         // this.twitter.last_status.id = posts.id
         break
       }

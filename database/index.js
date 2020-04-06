@@ -3,7 +3,7 @@ const connection = require('./connection')
 const { usersShow } = require('../API')
 const parseLink = require('../helpers/parseLink')
 const { handleAddToList } = require('../handlers')
-const list_id = process.env.LIST_ID
+const listId = process.env.LIST_ID
 
 const db = {
   connection
@@ -15,8 +15,8 @@ Object.keys(collections).forEach((collectionName) => {
 
 // User methods
 
-db.User.check = async (telegram_id) => {
-  const user = await db.User.findOne({ telegram_id })
+db.User.check = async (telegramId) => {
+  const user = await db.User.findOne({ telegram_id: telegramId })
     .populate('twitters')
     .populate('groups')
 
@@ -50,11 +50,11 @@ db.Twitter.check = async (ctx) => {
   const link = parseLink(ctx.message.text)
 
   if (!link) {
-    throw 'Wrong link'
+    throw new Error('Wrong link')
   }
   const user = await usersShow(link)
 
-  const twitter = await db.Twitter.findOne({ id: user.id })
+  const twitter = await db.Twitter.findOne({ id: user.id_str })
     .populate('users')
     .populate('groups')
     .catch((error) => console.log(error))
@@ -68,16 +68,16 @@ db.Twitter.check = async (ctx) => {
 } // ratelimit
 
 db.Twitter.upToDate = async (ctx) => {
-  const fetched_tw = await db.Twitter.check(ctx)
+  const fetchedTw = await db.Twitter.check(ctx)
 
-  if (fetched_tw.error) {
+  if (fetchedTw.error) {
     let twitter = new db.Twitter()
 
     twitter.counter = 0
-    twitter.screen_name = fetched_tw.screen_name
-    twitter.name = fetched_tw.name
-    twitter.id = fetched_tw.id_str
-    twitter.last_status = fetched_tw.status
+    twitter.screen_name = fetchedTw.screen_name
+    twitter.name = fetchedTw.name
+    twitter.id = fetchedTw.id_str
+    twitter.last_status = fetchedTw.status
     twitter.users.addToSet(ctx.session.user)
 
     ctx.session.user.twitters.addToSet(twitter)
@@ -89,25 +89,13 @@ db.Twitter.upToDate = async (ctx) => {
     return twitter
   }
 
-  // let findTwitter = await ctx.session.user.find({$elemMatch: {id: fetched_tw.id }})
-  // console.log(findTwitter)
+  const oldTw = ctx.session.user.twitters.reduce((a, v) => v.id === fetchedTw.id, false)
 
-  // let findUser = await fetched_tw.find({'users': {$elemMatch: { telegram_id: ctx.session.user.telegram_id }}})
-  // console.log(findUser)
+  const addTwitter = !oldTw ? ctx.session.user.twitters.addToSet(fetchedTw) : null
+  console.log('add twitter: ', addTwitter)
 
-  // let add_user = await fetched_tw.users.addToSet(ctx.session.user)
-  // console.log('add user: ', add_user)
-
-  // let tw_save = await fetched_tw.save().catch((error) => console.log(ctx.session.user.username, error))
-  // console.log('tw_save: ', tw_save)
-
-  const old_tw = ctx.session.user.twitters.reduce((a, v) => v.id === fetched_tw.id, false)
-
-  const add_twitter = !old_tw ? ctx.session.user.twitters.addToSet(fetched_tw) : null
-  console.log('add twitter: ', add_twitter)
-
-  const user_save = await ctx.session.user.save().catch((error) => console.log(ctx.session.user.username, error))
-  console.log(user_save)
+  const userSave = await ctx.session.user.save().catch((error) => console.log(ctx.session.user.username, error))
+  return userSave ? fetchedTw : new Error('Didn\'t added. Error')
 }
 
 db.Twitter.deactivate = async (twitter, group) => {
@@ -126,11 +114,11 @@ db.Twitter.deactivate = async (twitter, group) => {
   return null
 }
 
-db.Twitter.settings = async (twitter_id, group_id, option) => {
-  const group = await db.Group.findById(group_id)
+db.Twitter.settings = async (twitterId, groupId, option) => {
+  const group = await db.Group.findById(groupId)
 
   group.settings.forEach((set) => {
-    if (set.twitter_id === twitter_id) {
+    if (set.twitter_id === twitterId) {
       set[option] = !set[option]
     }
   })
@@ -165,14 +153,14 @@ db.Twitter.activate = async (twitter, group) => {
     }
   })
 
-  return await handleAddToList(list_id, twitter.id).catch((err) => console.log(err))
+  return await handleAddToList(listId, twitter.id).catch((err) => console.log(err))
 }
 
 // Group methods
 
 db.Group.check = async (username) => {
   if (!username) {
-    throw 'Wrong username'
+    throw new Error('Wrong username')
   }
 
   const group = await db.Group.findOne({ username })
@@ -220,6 +208,10 @@ db.Group.add = async (ctx) => {
   return group
 }
 
+module.exports = {
+  db
+}
+
 // const updateSettings = async () => {
 //   const groups = await db.Group.find()
 
@@ -248,7 +240,3 @@ db.Group.add = async (ctx) => {
 // }
 
 // updateSettings()
-
-module.exports = {
-  db
-}

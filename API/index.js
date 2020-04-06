@@ -1,13 +1,15 @@
 const listMembersCreate = require('./listMembersCreate')
 const listStatuses = require('./listStatuses')
-const user_timeline = require('./user_timeline')
+const userTimeline = require('./user_timeline')
 const usersShow = require('./usersShow')
+const statusesShow = require('./statusesShow')
 const listShow = require('./listShow')
 
 module.exports = {
-    listMembersCreate,
-    user_timeline,
-    listStatuses,
-    usersShow,
-    listShow
+  listMembersCreate,
+  userTimeline,
+  listStatuses,
+  usersShow,
+  statusesShow,
+  listShow
 }

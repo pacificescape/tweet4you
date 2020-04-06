@@ -9,8 +9,8 @@ const auth = require('../OAuth')
  * Requests / 15-min window (user auth): 900
  */
 
-module.exports = (listId) => {
-  const url = `https://api.twitter.com/1.1/lists/statuses.json?list_id=${listId}&tweet_mode=extended`
+module.exports = (messageId) => {
+  const url = `https://api.twitter.com/1.1/statuses/show.json?id=${messageId}&tweet_mode=extended`
   try {
     return got(url, {
       headers: auth(url),

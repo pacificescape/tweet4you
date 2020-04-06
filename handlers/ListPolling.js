@@ -1,6 +1,6 @@
 // const { EventEmitter } = require('events')
 const CronJob = require('cron').CronJob
-const { listStatuses } = require('../API/')
+const { listStatuses } = require('../API')
 const handleSendMessage = require('./handleSendMessage')
 
 /**
@@ -9,7 +9,7 @@ const handleSendMessage = require('./handleSendMessage')
  *
 */
 
-class handleListPolling {
+class ListPolling {
   constructor (bot, db) {
     this.list_id = process.env.LIST_ID
     this.bot = bot
@@ -47,7 +47,7 @@ class handleListPolling {
               twitter.last_status = post
               newPosts.push({
                 post,
-                groups: twitter.groups.map(g => g.group_id ? g.group_id : g.username),
+                groups: twitter.groups.map(g => g.group_id ? g.group_id : g.username), // number string???
                 settings: twitter.groups.reduce((a, g) => { return { ...a, [g.group_id ? g.group_id : g.username]: g.settings } }, {})
               })
             }
@@ -67,4 +67,4 @@ class handleListPolling {
   }
 }
 
-module.exports = handleListPolling
+module.exports = ListPolling
