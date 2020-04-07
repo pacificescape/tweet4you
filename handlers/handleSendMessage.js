@@ -55,7 +55,7 @@ class Message {
       this.tweet.entities.media.forEach(m => links.push(m.url))
     }
 
-    if (this.reply && this.reply.entities.media) {
+    if (this.reply && this.reply.entities && this.reply.entities.media) {
       this.reply.entities.media.forEach(m => links.push(m.url))
     }
 
