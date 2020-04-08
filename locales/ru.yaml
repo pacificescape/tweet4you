@@ -28,6 +28,7 @@ twitter:
   name: Имя
   retweets: Ретвиты
   replies: Реплаи
+  from: ретвит "from"
   images: Картинки
   videos: Видео
   edit: Редактировать <i>${screen_name}</i> в ${group_name}

@@ -38,12 +38,24 @@ class Message {
       this.tweet = tweet
       this.preview = true
       this.settings = settings
-      this.text = await this.getText()
-      this.media = this.getMedia()
-      this.method = this.getMethod()
-      this.trash = false
+      this.trash = this.isTrash()
+      if (!this.trash) {
+        this.text = settings.onlyMedia ? '' : await this.getText()
+        this.media = this.getMedia()
+        this.method = this.getMethod()
+      }
       return this
     })()
+  }
+
+  isTrash () {
+    if (!this.tweet.is_quote_status && this.tweet.retweeted_status) {
+      return true
+    }
+    if (!this.settings.retweets && this.tweet.retweeted_status) {
+      return true
+    }
+    return false
   }
 
   deleteLinks (text) {
@@ -67,7 +79,7 @@ class Message {
       links.push(this.tweet.quoted_status_permalink.url)
     }
 
-    if (quote && quote.quoted_status.entities.media) {
+    if (quote && quote.quoted_status && quote.quoted_status.entities.media) {
       links.push(quote.quoted_status.entities.media[0].url)
     }
 
@@ -137,7 +149,7 @@ class Message {
     let medias = ''
 
     if (extendedEntities) {
-      medias = extendedEntities.media.map((media, i) => {
+      medias = extendedEntities.media.map((media) => {
         let type = media.type
         switch (type) {
           case 'animated_gif':
@@ -174,11 +186,20 @@ class Message {
       return medias[0].media
     }
 
+    if (this.settings.onlyMedia && medias) { // ??
+      this.text = this.settings.onlyMedia ? '' : this.text
+    }
+
     return medias
   }
 
   getMethod () {
     let method = 'sendMessage'
+
+    if (this.settings.onlyText) {
+      this.media = ''
+    }
+
     if (Array.isArray(this.media)) {
       method = 'sendMediaGroup' // (chatId, media, [extra])
     } else {
