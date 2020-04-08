@@ -2,7 +2,7 @@
 const CronJob = require('cron').CronJob
 const { listStatuses } = require('../API')
 const handleSendMessage = require('./handleSendMessage')
-
+const frequency = process.env.FREQUENCY || '*/30 * * * * *'
 /**
  *
  * handleListPolling - class for checking twitter list
@@ -14,7 +14,7 @@ class ListPolling {
     this.list_id = process.env.LIST_ID
     this.bot = bot
     this.db = db
-    this.job = new CronJob('*/30 * * * * *', this.cronPolling, null, false, 'America/Los_Angeles', this)
+    this.job = new CronJob(frequency, this.cronPolling, null, false, 'America/Los_Angeles', this)
     this.counter = 0
   }
 
