@@ -22,7 +22,7 @@ function mainTwitterPage (ctx) {
   const { page } = paginator(ctx, ctx.i18n.t('back'), 'back')
 
   const twitters = ctx.session.user.twitters.slice(page * 6, (page + 1) * 6).map((v) => {
-    return Markup.callbackButton(v.screen_name, `choseGroup=${v.id}`)
+    return Markup.callbackButton(v.screen_name, `choseTwitter=${v.id}`)
   })
 
   ctx.editMessageText(ctx.i18n.t('twitterMenu', {
@@ -43,10 +43,10 @@ twitterMenu.enter((ctx) => {
   mainTwitterPage(ctx)
 })
 
-// CHOSEGROUP
+// choseTwitter
 
-twitterMenu.action(/choseGroup=(.+)/, (ctx) => {
-  // ctx.session.twitter = ctx.match[1]
+twitterMenu.action(/choseTwitter=(.+)/, (ctx) => {
+  ctx.session.twitter = ctx.match[1]
   const twitter = ctx.session.user.twitters.find((tw) => tw.id === ctx.match[1])
   let groups = []
 
@@ -62,7 +62,7 @@ twitterMenu.action(/choseGroup=(.+)/, (ctx) => {
   const { page } = paginator(ctx, ctx.i18n.t('back'), 'backToMain')
 
   groups = groups.slice(page * 6, (page + 1) * 6).map((I) => {
-    return Markup.callbackButton(ctx.session.user.groups[I].username, `manage=${I}`)
+    return Markup.callbackButton(ctx.session.user.groups[I].username, `choseGroup=${I}`)
   })
 
   ctx.editMessageText(ctx.i18n.t('groupsMenu', { // новый текст
@@ -80,19 +80,22 @@ twitterMenu.action(/choseGroup=(.+)/, (ctx) => {
 
 // MANAGE
 
-twitterMenu.action(/manage=(.+)/, async (ctx) => {
-  const settings = ctx.session.user.groups[ctx.match[1]].settings[ctx.session.twitter]
+async function manageTwitter (ctx) {
+  ctx.session.settings = ctx.session.user.groups[ctx.session.currentGroupIndex].settings[ctx.session.twitter]
+  const settings = ctx.session.settings
+
   const twitter = await ctx.state.db.Twitter.findOne({ id: ctx.session.twitter })
 
   editTwitterButtons = (id = '') => [
-    Markup.callbackButton(`${ctx.i18n.t('twitter.link')} ${settings.link ? '✅' : '❌'}`, `link=${id}`),
-    Markup.callbackButton(`${ctx.i18n.t('twitter.name')} ${settings.name ? '✅' : '❌'}`, `name=${id}`),
-    Markup.callbackButton(`${ctx.i18n.t('twitter.retweets')} ${settings.retweets ? '✖️' : '✖️'}`, `retweets=${id}`),
-    Markup.callbackButton(`${ctx.i18n.t('twitter.replies')} ${settings.replies ? '✖️' : '✖️'}`, `replies=${id}`),
-    Markup.callbackButton(`${ctx.i18n.t('twitter.images')} ${settings.images ? '✖️' : '✖️'}`, `images=${id}`),
-    Markup.callbackButton(`${ctx.i18n.t('twitter.videos')} ${settings.videos ? '✖️' : '✖️'}`, `videos=${id}`),
-    Markup.callbackButton(`${ctx.i18n.t('twitter.onlyText')} ${settings.onlyText ? '✖️' : '✖️'}`, `onlyText=${id}`),
-    Markup.callbackButton(`${ctx.i18n.t('twitter.onlyMedia')} ${settings.onlyMedia ? '✅' : '❌'}`, `onlyMedia=${id}`),
+    Markup.callbackButton(`${ctx.i18n.t('twitter.link')} ${settings.link ? '✅' : '❌'}`, `setting=link=${id}`),
+    Markup.callbackButton(`${ctx.i18n.t('twitter.name')} ${settings.name ? '✅' : '❌'}`, `setting=name=${id}`),
+    Markup.callbackButton(`${ctx.i18n.t('twitter.retweets')} ${settings.retweets ? '✅' : '❌'}`, `setting=retweets=${id}`),
+    Markup.callbackButton(`${ctx.i18n.t('twitter.replies')} ${settings.replies ? '✅' : '❌'}`, `setting=replies=${id}`),
+    Markup.callbackButton(`${ctx.i18n.t('twitter.images')} ${settings.images ? '✅' : '❌'}`, `setting=images=${id}`),
+    Markup.callbackButton(`${ctx.i18n.t('twitter.videos')} ${settings.videos ? '✅' : '❌'}`, `setting=videos=${id}`),
+    Markup.callbackButton(`${ctx.i18n.t('twitter.onlyText')} ${settings.onlyText ? '✅' : '❌'}`, `setting=onlyText=${id}`),
+    Markup.callbackButton(`${ctx.i18n.t('twitter.onlyMedia')} ${settings.onlyMedia ? '✅' : '❌'}`, `setting=onlyMedia=${id}`),
+    Markup.callbackButton(`${ctx.i18n.t('twitter.clearMedia')} ${settings.clearMedia ? '✅' : '❌'}`, `setting=clearMedia=${id}`),
     Markup.callbackButton(`${ctx.i18n.t('twitter.addTo')}`, `AddTo=${id}`),
     Markup.callbackButton(`${ctx.i18n.t('twitter.delete')}`, `Delete=${id}`)
   ]
@@ -105,7 +108,7 @@ twitterMenu.action(/manage=(.+)/, async (ctx) => {
   }
 
   ctx.editMessageText(ctx.i18n.t('twitter.edit', {
-    group_name: ctx.session.user.groups[ctx.match[1]].title,
+    group_name: ctx.session.user.groups[ctx.session.currentGroupIndex].title,
     screen_name: twitter.screen_name
   }),
   Markup.inlineKeyboard(editTwitterButtons(twitter.id).concat([
@@ -115,15 +118,24 @@ twitterMenu.action(/manage=(.+)/, async (ctx) => {
     wrap: (btn, index, currentRow) => currentRow.length === 2 || index === editTwitterButtons().length
   }).extra({ parse_mode: 'HTML' })
   )
+}
+
+twitterMenu.action(/choseGroup=(.+)/, async (ctx) => {
+  ctx.session.currentGroupIndex = ctx.match[1]
+  ctx.session.currentGroup = ctx.session.user.groups[ctx.match[1]].username
+  manageTwitter(ctx)
 })
 
 // UTILS
 
-twitterMenu.action(/(onlyMedia)=(.+)/, async (ctx) => {
-  // let twitter = await ctx.state.db.Twitter.findOne({ id: ctx.match[1] })
-  await ctx.state.db.Twitter.settings(ctx.match[2], ctx.session.currentGroup, ctx.match[1])
-
-  ctx.scene.enter('mainMenu')
+twitterMenu.action(/setting=(.+)=(.+)/, (ctx) => {
+  // ctx.state.db.Twitter.settings(twitterId, groupId, option)
+  ctx.state.db.Twitter.settings(ctx.match[2], ctx.session.currentGroup, ctx.match[1])
+    .then(() => {
+      ctx.session.settings[ctx.match[1]] = !ctx.session.settings[ctx.match[1]]
+      manageTwitter(ctx)
+    })
+    .catch((err) => console.log(err))
 })
 
 twitterMenu.action('back', (ctx) => ctx.scene.enter('mainMenu'))

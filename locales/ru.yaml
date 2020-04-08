@@ -35,6 +35,7 @@ twitter:
   addTo: Добавить в
   onlyMedia: Только медиа
   onlyText: Только текст
+  clearMedia: Медиа без текста
 
 group:
   toggle_posting: Канал ${group.username}, управление постином

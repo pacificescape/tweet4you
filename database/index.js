@@ -115,14 +115,34 @@ db.Twitter.deactivate = async (twitter, group) => {
 }
 
 db.Twitter.settings = async (twitterId, groupId, option) => {
-  const group = await db.Group.findById(groupId)
+  const group = await db.Group.findOne({ username: groupId })
 
-  group.settings.forEach((set) => {
-    if (set.twitter_id === twitterId) {
-      set[option] = !set[option]
+  // const gr = await db.Group.findByIdAndUpdate(groupId, {
+  //   $set: {
+  //     ['settings.' + twitterId + '.' + option]: !['settings.' + twitterId + '.' + option]
+  //   }
+  // })
+
+  // db.Group.findByIdAndUpdate(groupId, {
+  //   $set: {
+  //     'items.$.name': 'updated item2',
+  //     'items.$.value': 'two updated'
+  //   }
+  // }, function () { })
+
+  // console.log(gr)
+
+  group.set({
+    settings: {
+      ...group.settings,
+      [twitterId]: {
+        ...group.settings[twitterId],
+        [option]: !group.settings[twitterId][option]
+      }
     }
   })
-  group.save()
+
+  group.save().then(g => console.log(g))
 }
 
 db.Twitter.activate = async (twitter, group) => {
@@ -146,7 +166,8 @@ db.Twitter.activate = async (twitter, group) => {
         images: true,
         videos: true,
         onlyText: false,
-        onlyMedia: false
+        onlyMedia: false,
+        clearMedia: false
       }
     }
   })
@@ -213,26 +234,27 @@ module.exports = {
 }
 
 // const updateSettings = async () => {
-//   const groups = await db.Group.find()
+//   const groups = await db.Group.find().populate('twitters')
 
 //   groups.forEach((group) => {
-//     Object.keys(group.settings).forEach((t) => {
+//     for (const twitter of group.twitters) {
 //       group.set({
-//         settings: {
-//           [t]: {
-//             ...group.settings[t],
-//             from: true
-//             // link: true,
-//             // retweets: true,
-//             // replies: true,
-//             // images: true,
-//             // videos: true,
-//             // onlyText: false,
-//             // onlyMedia: false
-//           }
+//         ['settings.' + [twitter.id]]: {
+//           clearMedia: false,
+//           name: true,
+//           from: true,
+//           link: true,
+//           retweets: true,
+//           replies: true,
+//           images: true,
+//           videos: true,
+//           onlyText: false,
+//           onlyMedia: false
 //         }
-//       })
-//     })
+//       }
+//       )
+//     }
+
 //     group.save().then((data) => {
 //       console.log(data)
 //     })
