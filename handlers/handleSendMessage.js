@@ -114,7 +114,7 @@ class Message {
     const textQuo = this.deleteLinks(this.tweet.is_quote_status ? this.tweet.quoted_status.full_text : '')
     const textRt = this.deleteLinks(this.tweet.retweeted_status ? this.tweet.retweeted_status.full_text : '')
 
-    text.push(`${this.reply ? `#reply\n<code>${this.reply.name}:</code>\n${this.reply.full_text}\n⬇\n` : ''}`)
+    text.push(`${this.reply ? `#reply\n<code>${this.reply.name}:</code>\n${this.reply.full_text}\n↓\n` : ''}`)
 
     const reply = this.reply ? '' : '\n'
     const linkToPost = this.linkMyself()
