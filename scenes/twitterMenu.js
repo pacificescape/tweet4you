@@ -1,5 +1,6 @@
 const Scene = require('telegraf/scenes/base')
 const Markup = require('telegraf/markup')
+const { finWord } = require('../helpers')
 // const Extra = require('telegraf/extra')
 
 const twitterMenu = new Scene('twitterMenu')
@@ -26,10 +27,11 @@ function mainTwitterPage (ctx) {
   })
 
   ctx.editMessageText(ctx.i18n.t('twitterMenu', {
-    twitters: `<b>${ctx.session.user.twitters.length}</b>`
+    twitters: `<b>${ctx.session.user.twitters.length}</b>`,
+    fin: finWord(ctx.session.user.twitters.length)
   }),
   Markup.inlineKeyboard(twitters.concat(buttons), {
-    wrap: (btn, index, currentRow) => currentRow.length === 2 && index <= twitters.length
+    wrap: (btn, index, currentRow) => currentRow.length === 2 || index === twitters.length
   }).extra({ parse_mode: 'HTML', disable_web_page_preview: true })
   ).catch((error) => console.log(ctx.from.id, error))
 }

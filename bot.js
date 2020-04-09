@@ -26,7 +26,8 @@ const bot = new Telegraf(process.env.BOT_TOKEN, {
     webhookReply: false
   }
 })
-bot.use(session({ ttl: 600 }))
+bot.telegram.getMe().then(me => { global.botId = me.id })
+bot.use(session({ ttl: 1200 }))
 
 // const { match } = I18n
 const i18n = new I18n({

@@ -205,17 +205,32 @@ db.Group.update = async (ctx) => { // first time
 }
 
 db.Group.add = async (ctx) => {
+  const info = await ctx.telegram.getChatAdministrators(`@${ctx.match[1]}`).catch(err => err) // перехват выше
+
+  if (info.code) {
+    throw new Error('Бот не имеет доступа к группе/каналу')
+  }
+
+  if (Array.isArray(info)) {
+    const score = info.reduce((a, v) => (v.user.id === ctx.from.id) || (v.user.id === global.botId) ? a + 1
+      : a, 0)
+
+    if (score < 2) {
+      throw new Error('Бот или вы не являетесь администратором')
+    }
+  }
+
   let group = await db.Group.check(ctx.match[1])
 
   if (!group) {
     group = new db.Group()
     group.username = ctx.match[1]
-    group.users.addToSet(ctx.session.user)
+    // group.users.addToSet(ctx.session.user)
 
     await group.save().catch((err) => console.log(err))
   }
 
-  const newbie = group.users.reduce((a, v) => v.id !== group.id, true)
+  const newbie = group.users.reduce((a, v) => v.id !== ctx.session.user.id, true)
 
   if (newbie) {
     group.users.addToSet(ctx.session.user)

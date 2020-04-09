@@ -2,6 +2,29 @@ const Scene = require('telegraf/scenes/base')
 const Markup = require('telegraf/markup')
 // const isAdmin = require('../helpers/isAdmin')
 const groupsMenu = new Scene('groupsMenu')
+const { finWord } = require('../helpers')
+
+function mainGroupsPage (ctx, addition) {
+  const buttons = [
+    Markup.callbackButton(ctx.i18n.t('back'), 'main'),
+    Markup.callbackButton('\\\'>\'/', '>')
+  ]
+
+  const groups = ctx.session.user.groups.map((v, i) => {
+    return Markup.callbackButton(v.username, `group=${i}`)
+  })
+
+  ctx.reply(addition + ctx.i18n.t('groupsMenu', {
+    groups: `<b>${groups.length}</b>`,
+    fin: finWord(groups.length)
+  }),
+  Markup.inlineKeyboard(groups.concat(buttons), {
+    wrap: (btn, index, currentRow) => {
+      return currentRow.length === 2 || index === groups.length
+    }
+  }).extra({ parse_mode: 'HTML' })
+  )
+}
 
 groupsMenu.enter((ctx) => {
   const buttons = [
@@ -12,9 +35,11 @@ groupsMenu.enter((ctx) => {
   const groups = ctx.session.user.groups.map((v, i) => {
     return Markup.callbackButton(v.username, `group=${i}`)
   })
+  ctx.session.message_id = ctx.session.message_id || ctx.callbackQuery.message.message_id
 
   ctx.editMessageText(ctx.i18n.t('groupsMenu', {
-    groups: `<b>${groups.length}</b>`
+    groups: `<b>${groups.length}</b>`,
+    fin: finWord(groups.length)
   }),
   Markup.inlineKeyboard(groups.concat(buttons), {
     wrap: (btn, index, currentRow) => {
@@ -22,7 +47,7 @@ groupsMenu.enter((ctx) => {
     }
   }).extra({ parse_mode: 'HTML' })
   )
-    .then((message) => { ctx.scene.state.message_id = message.message_id })
+    .then((message) => { ctx.session.message_id = message.message_id })
     .catch((error) => console.log(ctx.from.id, error))
 })
 
@@ -41,18 +66,18 @@ groupsMenu.enter((ctx) => {
 // })
 
 groupsMenu.hears(/t.me\/(.+)|@(.+)/, async (ctx) => {
-  console.log('match: ', ctx.match)
-
   ctx.match = ctx.match.filter(e => e)
+  let addition
 
-  ctx.state.db.Group.add(ctx)
+  await ctx.state.db.Group.add(ctx)
     .then((g) => {
-      ctx.reply(`${g.username} Успешно добавлен.`, { reply_to_message_id: ctx.message.message_id })
+      addition = `${g.username} Успешно добавлен(а)\n\n`
     })
-    .then(() => ctx.scene.enter('groupsMenu'))
     .catch((err) => {
-      ctx.reply(`Ошибка: ${err}.`, { reply_to_message_id: ctx.message.message_id })
+      addition = `<b>Ошибка: ${err.message}.</b>\n\n`
     })
+
+  mainGroupsPage(ctx, addition)
 })
 
 // OPEN GROUP
