@@ -68,7 +68,8 @@ twitterMenu.action(/choseTwitter=(.+)/, (ctx) => {
   })
 
   ctx.editMessageText(ctx.i18n.t('groupsMenu', { // новый текст
-    groups: `<b>${groups.length}</b>`
+    groups: `<b>${groups.length}</b>`,
+    fin: finWord(groups.length)
   }),
   Markup.inlineKeyboard(groups.concat(buttons), {
     wrap: (btn, index, currentRow) => {
@@ -132,7 +133,7 @@ async function manageTwitter (ctx) {
   }),
   Markup.inlineKeyboard(editTwitterButtons(twitter.id).concat([
     Markup.callbackButton(ctx.i18n.t('back'), 'reenter'),
-    Markup.callbackButton('>', '>')
+    Markup.callbackButton('>', '><') // ???
   ]), {
     wrap: (btn, index, currentRow) => currentRow.length === 2 || index === editTwitterButtons().length
   }).extra({ parse_mode: 'HTML' })
@@ -148,7 +149,6 @@ twitterMenu.action(/choseGroup=(.+)/, async (ctx) => {
 // UTILS
 
 twitterMenu.action(/setting=(.+)=(.+)/, (ctx) => {
-  // ctx.state.db.Twitter.settings(twitterId, groupId, option)
   ctx.state.db.Twitter.settings(ctx.match[2], ctx.session.currentGroup, ctx.match[1])
     .then(() => {
       ctx.session.settings[ctx.match[1]] = !ctx.session.settings[ctx.match[1]]
@@ -162,21 +162,32 @@ twitterMenu.action('reenter', (ctx) => mainTwitterPage(ctx))
 
 // объединить
 
-twitterMenu.action('<', (ctx) => {
-  if (ctx.session.page > 0) {
-    ctx.session.page -= 1
+twitterMenu.action(/>|</, (ctx) => {
+  switch (ctx.match[0]) {
+    case '<':
+      if (ctx.session.page > 0) {
+        ctx.session.page -= 1
+      }
+      break
+    case '>':
+      if (ctx.session.page < ctx.session.pages) {
+        ctx.session.page += 1
+      }
+      break
+    default:
+      return
   }
 
   mainTwitterPage(ctx) // switch
 })
 
-twitterMenu.action('>', (ctx) => {
-  if (ctx.session.page < ctx.session.pages) {
-    ctx.session.page += 1
-  }
+// twitterMenu.action('>', (ctx) => {
+//   if (ctx.session.page < ctx.session.pages) {
+//     ctx.session.page += 1
+//   }
 
-  mainTwitterPage(ctx) // switch
-})
+//   mainTwitterPage(ctx) // switch
+// })
 
 // HEARS TWITTER
 

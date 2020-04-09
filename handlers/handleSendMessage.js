@@ -49,7 +49,7 @@ class Message {
   }
 
   isTrash () {
-    if (!this.tweet.is_quote_status && this.tweet.retweeted_status) {
+    if (!this.settings.replies && this.tweet.is_quote_status) {
       return true
     }
     if (!this.settings.retweets && this.tweet.retweeted_status) {
@@ -89,7 +89,7 @@ class Message {
   }
 
   linkMyself () {
-    return `https://twitter.com/${this.tweet.user.screen_name}/status/${this.tweet.id_str}`
+    return `<a href="https://twitter.com/${this.tweet.user.screen_name}/status/${this.tweet.id_str}">Twitter</a>`
   }
 
   async getText () {
@@ -114,29 +114,29 @@ class Message {
     const textQuo = this.deleteLinks(this.tweet.is_quote_status ? this.tweet.quoted_status.full_text : '')
     const textRt = this.deleteLinks(this.tweet.retweeted_status ? this.tweet.retweeted_status.full_text : '')
 
-    text.push(`${this.reply ? `#reply\n<b>${this.reply.name}</b>:\n${this.reply.full_text}\n\n⬇\n\n` : ''}`)
+    text.push(`${this.reply ? `#reply\n<code>${this.reply.name}:</code>\n${this.reply.full_text}\n⬇\n` : ''}`)
 
     const reply = this.reply ? '' : '\n'
     const linkToPost = this.linkMyself()
 
     if (this.tweet.quoted_status) {
-      text.push(`${this.settings.name ? `<b> ${this.tweet.user.name}</b>: ` : ''}`)
-      text.push(`${textTw ? `${reply}\n${textTw}\n\n` : ''}`)
-      text.push(`${textQuo ? `${this.tweet.quoted_status.user.name}:\n\n<i>${textQuo}</i>\n` : ''}`)
+      text.push(`${this.settings.name ? ` <code>${this.tweet.user.name}:</code> ` : ''}`)
+      text.push(`${textTw ? `\n${textTw}\n\n` : ''}`) // ${reply}
+      text.push(`${textQuo ? `<code>${this.tweet.quoted_status.user.name}:</code>\n<i>${textQuo}</i>\n\n` : ''}`)
       text.push(`${this.settings.link ? `<a href="${linkToPost}">${linkToPost}...</a>` : ''}`)
     } else if (this.tweet.retweeted_status) {
-      text.push(`${this.settings.name ? this.tweet.user.name + ' ' : ''}`)
+      text.push(`${this.settings.name ? `<code>${this.tweet.user.name}</code>` + ' ' : ''}`)
       text.push('#retweet ')
-      text.push(`${this.settings.from ? `from ${this.tweet.retweeted_status.user.name}` : ''}`)
-      text.push(`${textRt ? `${reply}\n` + textRt + '\n' : ''}`)
+      text.push(`${this.settings.from ? `<code>from ${this.tweet.retweeted_status.user.name}</code>` : ''}`)
+      text.push(`${textRt ? '\n' + textRt + '\n\n' : ''}`) // ${reply}
       text.push(`${this.settings.link ? `<a href="${linkToPost}">${linkToPost}</a>` : ''}`)
     } else {
-      text.push(`${this.settings.name ? `<b>${this.tweet.user.name}</b>: ` : ''}`)
-      text.push(`${textTw ? `${reply}\n${textTw}\n\n` : ''}`)
+      text.push(`${this.settings.name ? `<code>${this.tweet.user.name}:</code> ` : ''}`)
+      text.push(`${textTw ? `\n${textTw}\n\n` : ''}`) // ${reply}
       text.push(`${this.settings.link ? `<a href="${linkToPost}">${linkToPost}</a>` : ''}`)
     }
 
-    text = text.join('')
+    text = text.join('').trim()
     this.preview = !(text.indexOf('https://t.co') > -1) // ???
 
     return text
