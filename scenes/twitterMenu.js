@@ -54,7 +54,9 @@ twitterMenu.action(/choseTwitter=(.+)/, (ctx) => {
 
   twitter.groups.forEach((g) => {
     const i = ctx.session.user.groups.findIndex((grUser) => grUser.username === g.username)
-    groups.push(i)
+    if (i !== -1) {
+      groups.push(i)
+    }
   })
   groups.filter(e => e)
 
