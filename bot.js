@@ -69,9 +69,9 @@ bot.command('f', owner, () => list.job.stop())
 
 bot.command('start', (ctx) => ctx.scene.enter('mainMenu'))
 bot.hears('!tweet', isAdmin, sendInvite) // сделать бот приватным
-bot.on('message', (ctx) => {
-  ctx.reply('/help')
-})
+// bot.on('message', (ctx) => {
+//   ctx.reply('/help')
+// })
 bot.action(/.+/, (ctx) => ctx.scene.enter('mainMenu'))
 bot.use(scenes.middleware())
 

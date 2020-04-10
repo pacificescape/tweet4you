@@ -67,9 +67,10 @@ twitterMenu.action(/choseTwitter=(.+)/, (ctx) => {
     return Markup.callbackButton(ctx.session.user.groups[I].username, `choseGroup=${I}`)
   })
 
-  ctx.editMessageText(ctx.i18n.t('groupsMenu', { // новый текст
+  ctx.editMessageText(ctx.i18n.t('twitter.choseGroup', { // новый текст
+    twitter: `<b>${twitter.screen_name}</b>`,
     groups: `<b>${groups.length}</b>`,
-    fin: finWord(groups.length)
+    fin: (groups.length === 11 || groups.length % 10 !== 1) ? ctx.i18n.t('twitter.x2-9') : ctx.i18n.t('twitter.x1')
   }),
   Markup.inlineKeyboard(groups.concat(buttons), {
     wrap: (btn, index, currentRow) => {
@@ -128,7 +129,7 @@ async function manageTwitter (ctx) {
   }
 
   ctx.editMessageText(ctx.i18n.t('twitter.edit', {
-    group_name: ctx.session.user.groups[ctx.session.currentGroupIndex].title,
+    group_name: ctx.session.user.groups[ctx.session.currentGroupIndex].username,
     screen_name: twitter.screen_name
   }),
   Markup.inlineKeyboard(editTwitterButtons(twitter.id).concat([
