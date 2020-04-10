@@ -39,4 +39,4 @@ twitter:
   clearMedia: Медиа без текста
 
 group:
-  toggle_posting: Канал ${group.username}, управление постином
+  toggle_posting: Канал ${username}, управление постином
