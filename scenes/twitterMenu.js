@@ -181,14 +181,6 @@ twitterMenu.action(/>|</, (ctx) => {
   mainTwitterPage(ctx) // switch
 })
 
-// twitterMenu.action('>', (ctx) => {
-//   if (ctx.session.page < ctx.session.pages) {
-//     ctx.session.page += 1
-//   }
-
-//   mainTwitterPage(ctx) // switch
-// })
-
 // HEARS TWITTER
 
 twitterMenu.hears(/twitter.com/, (ctx) => {

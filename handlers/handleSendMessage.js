@@ -89,7 +89,7 @@ class Message {
   }
 
   linkMyself () {
-    return `<a href="https://twitter.com/${this.tweet.user.screen_name}/status/${this.tweet.id_str}">Twitter</a>`
+    return `https://twitter.com/${this.tweet.user.screen_name}/status/${this.tweet.id_str}`
   }
 
   async getText () {
@@ -123,17 +123,17 @@ class Message {
       text.push(`${this.settings.name ? ` <code>${this.tweet.user.name}:</code> ` : ''}`)
       text.push(`${textTw ? `\n${textTw}\n\n` : ''}`) // ${reply}
       text.push(`${textQuo ? `<code>${this.tweet.quoted_status.user.name}:</code>\n<i>${textQuo}</i>\n\n` : ''}`)
-      text.push(`${this.settings.link ? `<a href="${linkToPost}">${linkToPost}...</a>` : ''}`)
+      text.push(`${this.settings.link ? `<a href="${linkToPost}">Twitter</a>` : ''}`)
     } else if (this.tweet.retweeted_status) {
       text.push(`${this.settings.name ? `<code>${this.tweet.user.name}</code>` + ' ' : ''}`)
       text.push('#retweet ')
       text.push(`${this.settings.from ? `<code>from ${this.tweet.retweeted_status.user.name}</code>` : ''}`)
       text.push(`${textRt ? '\n' + textRt + '\n\n' : ''}`) // ${reply}
-      text.push(`${this.settings.link ? `<a href="${linkToPost}">${linkToPost}</a>` : ''}`)
+      text.push(`${this.settings.link ? `<a href="${linkToPost}">Twitter</a>` : ''}`)
     } else {
       text.push(`${this.settings.name ? `<code>${this.tweet.user.name}:</code> ` : ''}`)
       text.push(`${textTw ? `\n${textTw}\n\n` : ''}`) // ${reply}
-      text.push(`${this.settings.link ? `<a href="${linkToPost}">${linkToPost}</a>` : ''}`)
+      text.push(`${this.settings.link ? `<a href="${linkToPost}">Twitter</a>` : ''}`)
     }
 
     text = text.join('').trim()

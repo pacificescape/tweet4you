@@ -2,7 +2,7 @@
 const CronJob = require('cron').CronJob
 const { listStatuses } = require('../API')
 const handleSendMessage = require('./handleSendMessage')
-const frequency = process.env.FREQUENCY || '*/30 * * * * *'
+const frequency = process.env.FREQUENCY || '*/60 * * * * *'
 /**
  *
  * handleListPolling - class for checking twitter list
