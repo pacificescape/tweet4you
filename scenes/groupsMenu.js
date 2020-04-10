@@ -143,7 +143,7 @@ async function showTwitters (ctx) {
     return Markup.callbackButton(`${v.screen_name} ${enabled ? '✅' : '❌'}`, `${enabled ? `deactivate=${i}` : `activate=${i}`}`)
   })
 
-  ctx.editMessageText(ctx.i18n.t('toggle_posting', {
+  ctx.editMessageText(ctx.i18n.t('group.toggle_posting', {
     username: group.username
   }),
   Markup.inlineKeyboard(twitters.concat(buttons), {
