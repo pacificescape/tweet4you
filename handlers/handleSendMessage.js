@@ -132,7 +132,7 @@ class Message {
       text.push(`${this.settings.link ? `<a href="${linkToPost}">Twitter</a>` : ''}`)
     } else {
       text.push(`${(this.settings.name || this.reply) ? `<code>${this.tweet.user.name}:</code> ` : ''}`)
-      text.push(`${textTw ? `\n${textTw}\n\n` : ''}`) // ${reply}
+      text.push(`${textTw ? `\n${textTw}\n\n` : '🖼\n'}`) // ${reply}
       text.push(`${this.settings.link ? `<a href="${linkToPost}">Twitter</a>` : ''}`)
     }
 
