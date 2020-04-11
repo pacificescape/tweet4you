@@ -31,7 +31,7 @@ function mainTwitterPage (ctx) {
     fin: finWord(ctx.session.user.twitters.length)
   }),
   Markup.inlineKeyboard(twitters.concat(buttons), {
-    wrap: (btn, index, currentRow) => currentRow.length === 2 || index === twitters.length
+    wrap: (btn, i, currentRow) => (currentRow.length === 2 && i < twitters.length) || i === twitters.length
   }).extra({ parse_mode: 'HTML', disable_web_page_preview: true })
   ).catch((error) => console.log(ctx.from.id, error))
 }

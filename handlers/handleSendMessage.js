@@ -116,7 +116,7 @@ class Message {
 
     text.push(`${this.reply ? `#reply\n<code>${this.reply.name}:</code>\n${this.reply.full_text}\n↓\n` : ''}`)
 
-    const reply = this.reply ? '' : '\n'
+    // const reply = this.reply ? '' : '\n'
     const linkToPost = this.linkMyself()
 
     if (this.tweet.quoted_status) {
@@ -131,7 +131,7 @@ class Message {
       text.push(`${textRt ? '\n' + textRt + '\n\n' : ''}`) // ${reply}
       text.push(`${this.settings.link ? `<a href="${linkToPost}">Twitter</a>` : ''}`)
     } else {
-      text.push(`${this.settings.name ? `<code>${this.tweet.user.name}:</code> ` : ''}`)
+      text.push(`${(this.settings.name || this.reply) ? `<code>${this.tweet.user.name}:</code> ` : ''}`)
       text.push(`${textTw ? `\n${textTw}\n\n` : ''}`) // ${reply}
       text.push(`${this.settings.link ? `<a href="${linkToPost}">Twitter</a>` : ''}`)
     }

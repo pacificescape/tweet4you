@@ -3,67 +3,43 @@ const Markup = require('telegraf/markup')
 // const isAdmin = require('../helpers/isAdmin')
 const groupsMenu = new Scene('groupsMenu')
 const { finWord } = require('../helpers')
+let buttons
+
+function paginator (ctx, yaml, cbq) {
+  const { page, pages } = ctx.session
+
+  buttons = [
+    Markup.callbackButton(yaml, cbq),
+    page !== 0 ? Markup.callbackButton('<', '<') : null,
+    page !== pages - 1 ? Markup.callbackButton('>', '>') : null
+  ].filter(e => e)
+
+  return { page, pages }
+}
 
 function mainGroupsPage (ctx, addition) {
-  const buttons = [
-    Markup.callbackButton(ctx.i18n.t('back'), 'main'),
-    Markup.callbackButton('\\\'>\'/', '>')
-  ]
+  const { page } = paginator(ctx, ctx.i18n.t('back'), 'back')
 
-  const groups = ctx.session.user.groups.map((v, i) => {
+  const groups = ctx.session.user.groups.slice(page * 6, (page + 1) * 6).map((v, i) => {
     return Markup.callbackButton(v.username, `group=${i}`)
   })
 
-  ctx.reply(addition + ctx.i18n.t('groupsMenu', {
+  ctx.editMessageText(addition + ctx.i18n.t('groupsMenu', {
     groups: `<b>${groups.length}</b>`,
-    fin: finWord(groups.length)
+    fin: finWord(ctx.session.user.groups.length)
   }),
   Markup.inlineKeyboard(groups.concat(buttons), {
-    wrap: (btn, index, currentRow) => {
-      return currentRow.length === 2 || index === groups.length
-    }
+    wrap: (btn, i, currentRow) => (currentRow.length === 2 && i < groups.length) || i === groups.length
   }).extra({ parse_mode: 'HTML' })
-  )
+  ).catch((error) => console.log(ctx.from.id, error))
 }
 
 groupsMenu.enter((ctx) => {
-  const buttons = [
-    Markup.callbackButton(ctx.i18n.t('back'), 'main'),
-    Markup.callbackButton('\\\'>\'/', '>')
-  ]
+  ctx.session.pages = Math.ceil(ctx.session.user.groups.length / 6)
+  ctx.session.page = 0
 
-  const groups = ctx.session.user.groups.map((v, i) => {
-    return Markup.callbackButton(v.username, `group=${i}`)
-  })
-  ctx.session.message_id = ctx.session.message_id || ctx.callbackQuery.message.message_id
-
-  ctx.editMessageText(ctx.i18n.t('groupsMenu', {
-    groups: `<b>${groups.length}</b>`,
-    fin: finWord(groups.length)
-  }),
-  Markup.inlineKeyboard(groups.concat(buttons), {
-    wrap: (btn, index, currentRow) => {
-      return currentRow.length === 2 || index === groups.length
-    }
-  }).extra({ parse_mode: 'HTML' })
-  )
-    .then((message) => { ctx.session.message_id = message.message_id })
-    .catch((error) => console.log(ctx.from.id, error))
+  mainGroupsPage(ctx)
 })
-
-// groupsMenu.action('>', async (ctx) => {
-//     console.log(ctx.match)
-
-//     ctx.editMessageText('new text',
-//     Markup.inlineKeyboard(buttons.concat(buttons), {
-//         wrap: (btn, index, currentRow) => {
-//             return currentRow.length ===  2 || index === buttons.length
-//         }
-//       }).extra()
-//         ).catch((err) => console.log(err))
-
-//     // await ctx.answerCbQuery(`Oh, ${ctx.match}! Great choice`).catch((err) => console.log(err))
-// })
 
 groupsMenu.hears(/t.me\/(.+)|@(.+)/, async (ctx) => {
   ctx.match = ctx.match.filter(e => e)
@@ -123,8 +99,29 @@ groupsMenu.action(/activate=(.+)/, async (ctx) => {
 })
 
 groupsMenu.action('main', (ctx) => ctx.scene.enter('mainMenu'))
-groupsMenu.action('group', (ctx) => ctx.scene.enter('groupsMenu'))
-groupsMenu.action('delete', (ctx) => ctx.reply('\\(\'>\')/'))
+groupsMenu.action('group', (ctx) => mainGroupsPage(ctx))
+groupsMenu.action('delete', (ctx) => {
+  ctx.reply('\\(\'>\')/')
+})
+
+groupsMenu.action(/>|</, (ctx) => {
+  switch (ctx.match[0]) {
+    case '<':
+      if (ctx.session.page > 0) {
+        ctx.session.page -= 1
+      }
+      break
+    case '>':
+      if (ctx.session.page < ctx.session.pages) {
+        ctx.session.page += 1
+      }
+      break
+    default:
+      return
+  }
+
+  mainGroupsPage(ctx) // switch
+})
 
 async function showTwitters (ctx) {
   const buttons = [

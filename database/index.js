@@ -205,7 +205,7 @@ db.Group.update = async (ctx) => { // first time
 }
 
 db.Group.add = async (ctx) => {
-  const info = await ctx.telegram.getChatAdministrators(`@${ctx.match[1]}`).catch(err => err) // перехват выше
+  const info = await ctx.telegram.getChatAdministrators(`@${ctx.match[1]}`).catch(err => err) // перехват выше ?
 
   if (info.code) {
     throw new Error('Бот не имеет доступа к группе/каналу')
@@ -224,7 +224,7 @@ db.Group.add = async (ctx) => {
 
   if (!group) {
     group = new db.Group()
-    group.username = ctx.match[1]
+    group.username = `@${ctx.match[1]}`
     // group.users.addToSet(ctx.session.user)
 
     await group.save().catch((err) => console.log(err))
