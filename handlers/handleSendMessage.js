@@ -120,11 +120,10 @@ class Message {
     const textQuo = this.deleteLinks(this.tweet.quoted_status ? this.tweet.quoted_status.full_text : '') // this.tweet.is_quote_status &&
     const textRt = this.deleteLinks(this.tweet.retweeted_status ? this.tweet.retweeted_status.full_text : '')
 
-    text.push(`${this.reply ? `#reply\n<code>${this.reply.name}:</code>\n${this.reply.full_text}\n↓\n` : ''}`)
-
-    // const reply = this.reply ? '' : '\n'
-    const linkToPost = this.linkToCurrentPost()
     const linkMyself = this.linkMyself()
+    const linkToPost = this.linkToCurrentPost()
+
+    text.push(`${this.reply ? `#reply\n<a href="${linkMyself}">${this.reply.name}:</a>${this.reply.full_text ? '\n' + this.reply.full_text : '🖼'}\n↓\n` : ''}`)
 
     if (this.tweet.quoted_status) {
       text.push(`${this.settings.name ? ` <a href="${linkMyself}">${this.tweet.user.name}:</a> ` : ''}`)
