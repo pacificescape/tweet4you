@@ -128,7 +128,7 @@ class Message {
     if (this.tweet.quoted_status) {
       text.push(`${this.settings.name ? ` <a href="${linkMyself}">${this.tweet.user.name}:</a> ` : ''}`)
       text.push(`${textTw ? `\n${textTw}\n↓\n` : ''}`) // ${reply}
-      text.push(`${textQuo ? `<a href="${linkMyself}">${this.tweet.quoted_status.user.name}:</a>\n<i>${textQuo}</i>\n\n` : ''}`)
+      text.push(`${textQuo ? `<a href="${linkMyself}">${this.tweet.quoted_status.user.name}:</a>\n<i>${textQuo} </i>\n\n` : ''}`)
       text.push(`${this.settings.link ? `<a href="${linkToPost}">Twitter</a>` : ''}`)
     } else if (this.tweet.retweeted_status) {
       text.push(`${this.settings.name ? `<a href="${linkMyself}">${this.tweet.user.name}</a>` + ' ' : ''}`)
