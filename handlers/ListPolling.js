@@ -48,13 +48,12 @@ class ListPolling {
               newPosts.push({
                 twitter,
                 post,
-                groups: twitter.groups.map(g => g.group_id ? g.group_id : g.username), // number string???
+                groups: twitter.groups.map(g => g.username), // number string???
                 settings: twitter.groups.reduce((a, g) => { return { ...a, [g.group_id ? g.group_id : g.username]: g.settings } }, {})
               })
             }
           }
         }
-        // twitter.save()
       })
 
       if (newPosts.length > 0) {

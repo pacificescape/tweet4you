@@ -117,21 +117,6 @@ db.Twitter.deactivate = async (twitter, group) => {
 db.Twitter.settings = async (twitterId, groupId, option) => {
   const group = await db.Group.findOne({ username: groupId })
 
-  // const gr = await db.Group.findByIdAndUpdate(groupId, {
-  //   $set: {
-  //     ['settings.' + twitterId + '.' + option]: !['settings.' + twitterId + '.' + option]
-  //   }
-  // })
-
-  // db.Group.findByIdAndUpdate(groupId, {
-  //   $set: {
-  //     'items.$.name': 'updated item2',
-  //     'items.$.value': 'two updated'
-  //   }
-  // }, function () { })
-
-  // console.log(gr)
-
   group.set({
     settings: {
       ...group.settings,

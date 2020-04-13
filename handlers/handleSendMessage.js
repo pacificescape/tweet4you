@@ -16,7 +16,9 @@ const handleSendMessage = (bot, { twitter, post, groups = [], settings }) => {
     await (() => new Promise(resolve => setTimeout(resolve, i * 1500)))()
 
     let sendedMessage
-    const replyToId = message.reply_ids[group] ? message.reply_ids[group] : ''
+    const replyToId = message.reply_ids[group]
+    console.log(message.reply_ids) // ? message.reply_ids[group] : ''
+    console.log(message.reply_ids[group]) // ? message.reply_ids[group] : ''
     console.timeEnd(i)
 
     try {
@@ -60,6 +62,7 @@ const handleSendMessage = (bot, { twitter, post, groups = [], settings }) => {
     message = null
     return 'done'
   })
+
   Promise.all(sendPromises).then((array) => {
     console.log(array)
     twitter.save()
@@ -211,7 +214,7 @@ class Message {
 
     if (extendedEntities) {
       medias = extendedEntities.media.map((media) => {
-        let type = media.type
+        const type = media.type
         switch (type) {
           case 'video' || 'animated_gif':
             media.video_info.variants.find((v) => {
