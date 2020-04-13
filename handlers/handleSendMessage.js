@@ -1,44 +1,80 @@
 const { statusesShow } = require('../API')
 
-const handleSendMessage = async (bot, tweet, groups, settings) => {
-  groups.forEach(async (group, i) => {
+const handleSendMessage = (bot, { twitter, post, groups = [], settings }) => {
+  const tweet = post
+  const sendPromises = groups.map(async (group, i) => {
+    // return new Promise((resolve, reject) => {
     const setting = settings[group][tweet.user.id_str] || {}
 
-    let message = await new Message(tweet, setting)
+    let message = await new Message(tweet, setting, groups, twitter)
 
     if (message.trash) {
-      return
+      return 'trash'
     }
     console.time(i)
 
-    setTimeout(() => {
-      console.timeEnd(i)
-      try {
-        if (message.method === 'sendMessage') {
-          bot.telegram[message.method](group, message.text, {
-            parse_mode: 'HTML',
-            disable_web_page_preview: message.preview
-          })
-        } else {
-          bot.telegram[message.method](group, message.media, {
-            caption: message.text,
-            parse_mode: 'HTML',
-            disable_web_page_preview: message.preview
-          })
-        }
-      } catch (error) {
-        console.log(error)
+    await (() => new Promise(resolve => setTimeout(resolve, i * 1500)))()
+
+    let sendedMessage
+    const replyToId = message.reply_ids[group] ? message.reply_ids[group] : ''
+    console.timeEnd(i)
+
+    try {
+      if (message.method === 'sendMessage') {
+        sendedMessage = await bot.telegram[message.method](group, message.text, {
+          parse_mode: 'HTML',
+          disable_web_page_preview: message.preview,
+          reply_to_message_id: replyToId
+        }) // .then(res => res.result)
+      } else {
+        sendedMessage = await bot.telegram[message.method](group, message.media, {
+          caption: message.text,
+          parse_mode: 'HTML',
+          disable_web_page_preview: message.preview,
+          reply_to_message_id: replyToId // ???????
+        }) // .then(res => res.result)
       }
-      message = null
-    }, i * 1500)
+      if (!Array.isArray(sendedMessage)) {
+        sendedMessage = [sendedMessage]
+      }
+      sendedMessage.forEach((msg) => {
+        twitter.set({
+          posts: {
+            ...twitter.posts,
+            [group]: {
+              ...twitter.posts[group],
+              [tweet.id_str]: msg.message_id
+            }
+          }
+        })
+        twitter.groups.forEach((g, i) => {
+          if (g.username === group) {
+            twitter.groups[i].group_id = msg.chat.id
+            twitter.groups[i].title = msg.chat.title
+          }
+        })
+      })
+    } catch (error) {
+      return console.log(error)
+    }
+    message = null
+    return 'done'
   })
+  Promise.all(sendPromises).then((array) => {
+    console.log(array)
+    twitter.save()
+  })
+  // })
 }
 
 class Message {
-  constructor (tweet, settings) {
+  constructor (tweet, settings, groups, twitter) {
     return (async () => {
       this.tweet = tweet
       this.preview = true
+      this.reply_ids = {}
+      this.groups = groups // !!!
+      this.twitter = twitter // !!!
       this.settings = settings
       this.trash = this.isTrash()
       if (!this.trash) {
@@ -104,8 +140,22 @@ class Message {
     }
 
     if (this.tweet.in_reply_to_status_id_str) {
-      this.reply = await statusesShow(this.tweet.in_reply_to_status_id_str)
-        .catch((error) => { console.log(error) })
+      if (this.tweet.in_reply_to_user_id_str !== this.tweet.user.id_str) {
+        this.reply = await statusesShow(this.tweet.in_reply_to_status_id_str)
+          .catch((error) => { console.log(error) })
+      } else if (this.tweet.in_reply_to_user_id_str === this.tweet.user.id_str) {
+        this.reply_ids = this.groups.reduce((a, gr) => {
+          if (this.twitter.posts[gr]) {
+            if (this.twitter.posts[gr][this.tweet.in_reply_to_status_id_str]) {
+              return {
+                ...a,
+                [gr]: this.twitter.posts[gr][this.tweet.in_reply_to_status_id_str]
+              }
+            }
+          }
+          return a
+        }, {})
+      }
     }
 
     if (this.reply) {
@@ -163,10 +213,7 @@ class Message {
       medias = extendedEntities.media.map((media) => {
         let type = media.type
         switch (type) {
-          case 'animated_gif':
-            type = 'animation'
-            break
-          case 'video':
+          case 'video' || 'animated_gif':
             media.video_info.variants.find((v) => {
               if (v.content_type === 'video/mp4') {
                 media = v.url

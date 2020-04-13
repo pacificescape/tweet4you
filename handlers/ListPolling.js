@@ -30,7 +30,7 @@ class ListPolling {
   }
 
   async cronPolling () {
-    console.log('ListPolling: ', `${this.counter++}`, new Date().toLocaleTimeString('it-IT'))
+    console.log('ListPolling: ', this.list_id, ` ${this.counter++}`, new Date().toLocaleTimeString('it-IT'))
     try {
       let posts = await listStatuses(this.list_id)
       const twitters = await this.getTwitters(posts)
@@ -46,6 +46,7 @@ class ListPolling {
             if (Date.parse(post.created_at) > Date.parse(lastStatus.created_at)) {
               twitter.last_status = post
               newPosts.push({
+                twitter,
                 post,
                 groups: twitter.groups.map(g => g.group_id ? g.group_id : g.username), // number string???
                 settings: twitter.groups.reduce((a, g) => { return { ...a, [g.group_id ? g.group_id : g.username]: g.settings } }, {})
@@ -53,12 +54,12 @@ class ListPolling {
             }
           }
         }
-        twitter.save()
+        // twitter.save()
       })
 
       if (newPosts.length > 0) {
-        newPosts.map(({ post, groups = [], settings }, i) => {
-          setTimeout(() => handleSendMessage(this.bot, post, groups, settings), i * 2000)
+        newPosts.map((newPost, i) => {
+          setTimeout(() => handleSendMessage(this.bot, newPost), i * 2000)
         })
       }
     } catch (err) {

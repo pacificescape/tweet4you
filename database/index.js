@@ -277,3 +277,20 @@ module.exports = {
 // }
 
 // updateSettings()
+
+// const updateSettings = async () => {
+//   const twitters = await db.Twitter.find()
+
+//   twitters.forEach((twitter) => {
+//     twitter.post = {}
+//     twitter.set({
+//       posts: {}
+//     })
+
+//     twitter.save().then((data) => {
+//       console.log(data)
+//     })
+//   })
+// }
+
+// updateSettings()

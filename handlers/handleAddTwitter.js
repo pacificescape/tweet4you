@@ -1,6 +1,7 @@
 const listId = process.env.LIST_ID
+const handleAddToList = require('./handleAddToList')
 const {
-  listMembersCreate,
+  // listMembersCreate,
   userShow
 } = require('../API')
 
@@ -11,30 +12,32 @@ const {
  */
 
 module.exports = async (ctx) => {
-  let tweeter
+  let twitter
   const screenName = ctx.from.message.split('/').reverse()[0]
 
   const user = await userShow(screenName)
 
-  tweeter = await ctx.state.db.Tweet.findOne({
+  twitter = await ctx.state.db.Tweet.findOne({
     user_id: user.id
   })
 
-  if (!tweeter) {
-    tweeter = new ctx.state.db.Tweet()
+  if (!twitter) {
+    twitter = new ctx.state.db.Tweet()
 
-    tweeter.id = user.id
-    tweeter.status = {
+    twitter.id = user.id
+    twitter.status = {
       id: user.status.id,
       text: user.status.text,
       entities: user.status.entities,
       created_at: user.status.created_at
     }
-    tweeter.screen_name = user.screen_name
-    tweeter.description = user.description
-    tweeter.name = user.name
-    tweeter.list = listId
+    twitter.screen_name = user.screen_name
+    twitter.description = user.description
+    twitter.name = user.name
+    twitter.list = listId
   }
 
-  listMembersCreate(tweeter.list, tweeter.id)
+  // listMembersCreate(twitter.list, twitter.id)
+
+  handleAddToList(ctx, twitter)
 }
