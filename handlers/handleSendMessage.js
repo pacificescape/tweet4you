@@ -17,7 +17,7 @@ const handleSendMessage = (bot, { twitter, post, groups = [], settings }) => {
 
     let sendedMessage
     const replyToId = message.reply_ids[group]
-    console.log(message.reply_ids) // ? message.reply_ids[group] : ''
+    console.log(encodeURIComponent(group)) // ? message.reply_ids[group] : ''
     console.log(message.reply_ids[group]) // ? message.reply_ids[group] : ''
     console.timeEnd(i)
 
@@ -129,8 +129,8 @@ class Message {
     return text.trim()
   }
 
-  linkMyself () {
-    return `https://twitter.com/${this.tweet.user.screen_name}`
+  linkMyself (x) {
+    return `https://twitter.com/${x}`
   }
 
   linkToCurrentPost () {
@@ -173,7 +173,7 @@ class Message {
     const textQuo = this.deleteLinks(this.tweet.quoted_status ? this.tweet.quoted_status.full_text : '') // this.tweet.is_quote_status &&
     const textRt = this.deleteLinks(this.tweet.retweeted_status ? this.tweet.retweeted_status.full_text : '')
 
-    const linkMyself = this.linkMyself()
+    const linkMyself = this.linkMyself(this.tweet.user.screen_name)
     const linkToPost = this.linkToCurrentPost()
 
     text.push(`${this.reply ? `#reply\n<a href="${linkMyself}">${this.reply.name}:</a>${this.reply.full_text ? '\n' + this.reply.full_text : '🖼'}\n↓\n` : ''}`)
@@ -186,7 +186,7 @@ class Message {
     } else if (this.tweet.retweeted_status) {
       text.push(`${this.settings.name ? `<a href="${linkMyself}">${this.tweet.user.name}</a>` + ' ' : ''}`)
       text.push('#retweet ')
-      text.push(`${this.settings.from ? `from <a href="${linkMyself}">${this.tweet.retweeted_status.user.name}</a>` : ''}`)
+      text.push(`${this.settings.from ? `from <a href="${this.linkMyself(this.tweet.retweeted_status.user.screen_name)}">${this.tweet.retweeted_status.user.name}</a>` : ''}`)
       text.push(`${textRt ? '\n' + textRt + '\n\n' : ''}`) // ${reply}
       text.push(`${this.settings.link ? `<a href="${linkToPost}">Twitter</a>` : ''}`)
     } else {

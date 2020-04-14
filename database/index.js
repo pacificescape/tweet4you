@@ -4,6 +4,9 @@ const { usersShow } = require('../API')
 const parseLink = require('../helpers/parseLink')
 const { handleAddToList } = require('../handlers')
 const listId = process.env.LIST_ID
+const {
+  escapeHTMLChar
+} = require('../handlers')
 
 const db = {
   connection
@@ -33,8 +36,8 @@ db.User.update = async (ctx) => {
 
     user.telegram_id = ctx.from.id
     user.username = ctx.from.username
-    user.first_name = ctx.from.first_name || ''
-    user.last_name = ctx.from.last_name || ''
+    user.first_name = escapeHTMLChar(ctx.from.first_name) || ''
+    user.last_name = escapeHTMLChar(ctx.from.last_name) || ''
     user.locale = ctx.from.language_code || 'ru'
 
     await user.save().catch((err) => console.log(err))

@@ -5,7 +5,7 @@ const userSchema = mongoose.Schema({
     type: Number,
     index: true,
     unique: true,
-    required: true,
+    required: true
   },
   username: String,
   first_name: String,
@@ -25,9 +25,9 @@ const userSchema = mongoose.Schema({
   locale: {
     type: String,
     default: 'ru'
-  },
+  }
 }, {
-  timestamps: true,
+  timestamps: true
 })
 
 module.exports = userSchema
