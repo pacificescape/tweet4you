@@ -1,8 +1,12 @@
 // const { EventEmitter } = require('events')
 const CronJob = require('cron').CronJob
+const LRU = require('lru-cache')
 const { listStatuses } = require('../API')
 const handleSendMessage = require('./handleSendMessage')
+const getListQuery = require('./getListQuery')
 const frequency = process.env.FREQUENCY || '*/60 * * * * *'
+
+const lists = new LRU({ maxAge: 1000 * 60 * 5 })
 /**
  *
  * handleListPolling - class for checking twitter list
@@ -11,7 +15,6 @@ const frequency = process.env.FREQUENCY || '*/60 * * * * *'
 
 class ListPolling {
   constructor (bot, db) {
-    this.list_id = process.env.LIST_ID
     this.bot = bot
     this.db = db
     this.job = new CronJob(frequency, this.cronPolling, null, false, 'America/Los_Angeles', this)
@@ -30,6 +33,15 @@ class ListPolling {
   }
 
   async cronPolling () {
+    let ids = lists.get('list_ids')
+
+    if (!ids) {
+      ids = await getListQuery()
+      lists.set('list_ids', ids)
+    }
+
+    this.list_id = ids[this.counter % ids.length]
+
     console.log('ListPolling: ', this.list_id, ` ${this.counter++}`, new Date().toLocaleTimeString('it-IT'))
     try {
       let posts = await listStatuses(this.list_id)

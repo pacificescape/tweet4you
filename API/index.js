@@ -6,6 +6,7 @@ const usersShow = require('./usersShow')
 const listMembersCreate = require('./listMembersCreate')
 const listStatuses = require('./listStatuses')
 const listsCreate = require('./listsCreate')
+const listsList = require('./listsList')
 const listShow = require('./listShow')
 
 module.exports = {
@@ -15,7 +16,8 @@ module.exports = {
   usersShow,
 
   listMembersCreate,
+  listStatuses,
   listsCreate,
-  listShow,
-  listStatuses
+  listsList,
+  listShow
 }
