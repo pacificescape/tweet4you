@@ -1,5 +1,5 @@
 const listId = process.env.LIST_ID
-const handleAddToList = require('./handleAddToList')
+const addToList = require('./addToList')
 const {
   // listMembersCreate,
   userShow
@@ -39,5 +39,5 @@ module.exports = async (ctx) => {
 
   // listMembersCreate(twitter.list, twitter.id)
 
-  handleAddToList(ctx, twitter)
+  addToList(ctx, twitter)
 }

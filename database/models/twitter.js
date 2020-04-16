@@ -11,7 +11,7 @@ const twitterSchema = mongoose.Schema({
   last_status: {
     type: Object
   },
-  list: Number,
+  list: String,
   users: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'

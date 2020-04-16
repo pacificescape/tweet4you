@@ -1,9 +1,12 @@
+// const listId = process.env.LIST_ID
 const collections = require('./models')
 const connection = require('./connection')
-const { usersShow } = require('../API')
 const parseLink = require('../helpers/parseLink')
-const { handleAddToList } = require('../handlers')
-const listId = process.env.LIST_ID
+const { addToList } = require('../handlers')
+const {
+  usersShow,
+  listsCreate
+} = require('../API')
 const {
   escapeHTMLChar
 } = require('../handlers')
@@ -49,6 +52,8 @@ db.User.update = async (ctx) => {
   return user
 }
 
+// Twitter methods
+
 db.Twitter.check = async (ctx) => {
   const link = parseLink(ctx.message.text)
 
@@ -68,7 +73,7 @@ db.Twitter.check = async (ctx) => {
   }
 
   return twitter
-} // ratelimit
+}
 
 db.Twitter.upToDate = async (ctx) => {
   const fetchedTw = await db.Twitter.check(ctx)
@@ -140,7 +145,7 @@ db.Twitter.activate = async (twitter, group) => {
     }
   })
 
-  const gr = await db.Group.findByIdAndUpdate(group._id, {
+  await db.Group.findByIdAndUpdate(group._id, {
     $push: {
       twitters: twitter
     },
@@ -160,9 +165,10 @@ db.Twitter.activate = async (twitter, group) => {
     }
   })
 
-  console.log(gr)
-
-  return await handleAddToList(listId, twitter.id).catch((err) => console.log(err))
+  if (!twitter.list) {
+    const list = await db.List.getIncomplete()
+    return await addToList(list.id_str, twitter.id).catch((err) => console.log(err))
+  }
 }
 
 // Group methods
@@ -230,6 +236,41 @@ db.Group.add = async (ctx) => {
   ctx.session.user = await ctx.session.user.save()
 
   return group
+}
+
+db.Group.delete = async (ctx) => {
+  await db.Group.deleteOne({
+    _id: ctx.session.user.groups[ctx.session.group].id
+  })
+  const title = ctx.session.user.groups[ctx.session.group].title
+  ctx.session.user = await db.User.update(ctx)
+  return title
+}
+
+// List methods
+
+db.List.create = async () => {
+  const list = new db.List()
+  const newList = await listsCreate()
+
+  list.list_id = newList.id_str
+  list.full_name = newList.full_name
+  list.name = newList.name
+  list.member_count = 0
+  list.created = newList.created_at
+
+  return await list.save()
+}
+
+db.List.getIncomplete = async () => {
+  let list = db.List.findOne({ member_count: { $lt: 100 } })
+
+  if (!list) {
+    const date = new Date()
+    list = await db.List.create(`retweet4bot-${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`)
+  }
+
+  return list
 }
 
 module.exports = {

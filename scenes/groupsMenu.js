@@ -18,14 +18,15 @@ function paginator (ctx, yaml, cbq) {
 }
 
 function mainGroupsPage (ctx, addition) {
+  addition = addition || ''
   const { page } = paginator(ctx, ctx.i18n.t('back'), 'back')
 
-  const groups = ctx.session.user.groups.slice(page * 6, (page + 1) * 6).map((v, i) => {
-    return Markup.callbackButton(v.username, `group=${i}`)
+  const groups = ctx.session.user.groups.slice(page * 6, (page + 1) * 6).map((v) => {
+    return Markup.callbackButton(v.username, `group=${v.username}`)
   })
 
   ctx.editMessageText(addition + ctx.i18n.t('groupsMenu', {
-    groups: `<b>${groups.length}</b>`,
+    groups: `<b>${ctx.session.user.groups.length}</b>`,
     fin: finWord(ctx.session.user.groups.length)
   }),
   Markup.inlineKeyboard(groups.concat(buttons), {
@@ -43,7 +44,7 @@ groupsMenu.enter((ctx) => {
 
 groupsMenu.hears(/t.me\/(.+)|@(.+)/, async (ctx) => {
   ctx.match = ctx.match.filter(e => e)
-  let addition
+  let addition = ''
 
   await ctx.state.db.Group.add(ctx)
     .then((g) => {
@@ -53,7 +54,21 @@ groupsMenu.hears(/t.me\/(.+)|@(.+)/, async (ctx) => {
       addition = `<b>Ошибка: ${err.message}.</b>\n\n`
     })
 
-  mainGroupsPage(ctx, addition)
+  // mainGroupsPage(ctx, addition)
+  const { page } = paginator(ctx, ctx.i18n.t('back'), 'back')
+
+  const groups = ctx.session.user.groups.slice(page * 6, (page + 1) * 6).map((v) => {
+    return Markup.callbackButton(v.username, `group=${v.username}`)
+  })
+
+  ctx.reply(addition + ctx.i18n.t('groupsMenu', {
+    groups: `<b>${ctx.session.user.groups.length}</b>`,
+    fin: finWord(ctx.session.user.groups.length)
+  }),
+  Markup.inlineKeyboard(groups.concat(buttons), {
+    wrap: (btn, i, currentRow) => (currentRow.length === 2 && i < groups.length) || i === groups.length
+  }).extra({ parse_mode: 'HTML' })
+  ).catch((error) => console.log(ctx.from.id, error))
 })
 
 // OPEN GROUP
@@ -65,7 +80,7 @@ groupsMenu.action(/group=(.+)/, (ctx) => {
 
 groupsMenu.action(/deactivate=(.+)/, async (ctx) => {
   const twitter = ctx.session.user.twitters[ctx.match[1]]
-  const group = ctx.session.user.groups[ctx.session.group]
+  const group = ctx.session.user.groups.find((gr) => gr.username === ctx.session.group)
 
   const error = await ctx.state.db.Twitter.deactivate(twitter, group)
 
@@ -89,7 +104,7 @@ groupsMenu.action(/deactivate=(.+)/, async (ctx) => {
 
 groupsMenu.action(/activate=(.+)/, async (ctx) => {
   const twitter = ctx.session.user.twitters[ctx.match[1]]
-  const group = ctx.session.user.groups[ctx.session.group]
+  const group = ctx.session.user.groups.find((gr) => gr.username === ctx.session.group)
 
   await ctx.state.db.Twitter.activate(twitter, group)
 
@@ -100,8 +115,19 @@ groupsMenu.action(/activate=(.+)/, async (ctx) => {
 
 groupsMenu.action('main', (ctx) => ctx.scene.enter('mainMenu'))
 groupsMenu.action('group', (ctx) => mainGroupsPage(ctx))
-groupsMenu.action('delete', (ctx) => {
-  ctx.reply('\\(\'>\')/')
+groupsMenu.action('delete', async (ctx) => {
+  let addition
+
+  await ctx.state.db.Group.delete(ctx)
+    .then((g) => {
+      addition = `${g.username} Успешно удален(а)\n\n`
+    })
+    .catch((err) => {
+      addition = `<b>Ошибка: ${err.message}.</b>\n\n`
+      console.log(ctx.session.user.username, err)
+    })
+
+  mainGroupsPage(ctx, addition)
 })
 
 groupsMenu.action(/>|</, (ctx) => {
@@ -129,7 +155,7 @@ async function showTwitters (ctx) {
     Markup.callbackButton(ctx.i18n.t('delete'), 'delete')
   ]
 
-  const group = ctx.session.user.groups[ctx.session.group]
+  const group = ctx.session.user.groups.find((gr) => gr.username === ctx.session.group)
 
   const getGroup = (v, u) => v.groups.reduce((a, c) => c.username === u ? true : a, false)
 
