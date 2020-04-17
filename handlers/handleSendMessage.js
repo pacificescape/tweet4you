@@ -21,13 +21,15 @@ const handleSendMessage = (bot, { twitter, post, groups = [], settings }) => {
     console.timeEnd(i)
 
     try {
-      if ((message.method === 'sendMessage') && message.text) {
+      if (message.method === 'sendMessage') {
+        if (!message.text) return
+
         sendedMessage = await bot.telegram[message.method](group, message.text, {
           parse_mode: 'HTML',
           disable_web_page_preview: message.preview,
           reply_to_message_id: replyToId
         })
-      } else if (message.method !== 'sendMessage') {
+      } else {
         sendedMessage = await bot.telegram[message.method](group, message.media, {
           caption: message.text,
           parse_mode: 'HTML',
