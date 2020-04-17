@@ -171,6 +171,21 @@ db.Twitter.activate = async (twitter, group) => {
   }
 }
 
+db.Twitter.delete = async (ctx) => {
+  const twitter = await db.Twitter.findOne({ id: ctx.match[1] })
+    .populate('users')
+    .populate('groups')
+
+    const groups = [...new Set(posts.map((post) => post.user.id_str))]
+
+  await db.Twitter.deleteOne({
+    _id: ctx.session.user.groups[ctx.session.group].id
+  })
+  const title = ctx.session.user.groups[ctx.session.group].title
+  ctx.session.user = await db.User.update(ctx)
+  return title
+}
+
 // Group methods
 
 db.Group.check = async (username) => {
@@ -214,7 +229,7 @@ db.Group.add = async (ctx) => {
     }
   }
 
-  let group = await db.Group.check(ctx.match[1])
+  let group = await db.Group.check(`@${ctx.match[1]}`)
 
   if (!group) {
     group = new db.Group()
@@ -311,10 +326,7 @@ module.exports = {
 //   const twitters = await db.Twitter.find()
 
 //   twitters.forEach((twitter) => {
-//     twitter.post = {}
-//     twitter.set({
-//       posts: {}
-//     })
+//     twitter.list = process.env.LIST_ID
 
 //     twitter.save().then((data) => {
 //       console.log(data)

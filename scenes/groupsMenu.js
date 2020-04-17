@@ -48,7 +48,7 @@ groupsMenu.hears(/t.me\/(.+)|@(.+)/, async (ctx) => {
 
   await ctx.state.db.Group.add(ctx)
     .then((g) => {
-      addition = `${g.username} Успешно добавлен(а)\n\n`
+      addition = `@${g.username} Успешно добавлен(а)\n\n`
     })
     .catch((err) => {
       addition = `<b>Ошибка: ${err.message}.</b>\n\n`

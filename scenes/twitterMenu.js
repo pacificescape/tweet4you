@@ -163,6 +163,33 @@ twitterMenu.action(/setting=(.+)=(.+)/, (ctx) => {
 twitterMenu.action('back', (ctx) => ctx.scene.enter('mainMenu'))
 twitterMenu.action('reenter', (ctx) => mainTwitterPage(ctx))
 
+twitterMenu.action(/Delete=(.+)/, async (ctx) => {
+  let addition = ''
+
+  await ctx.state.db.Twitter.delete(ctx)
+    .then((t) => {
+      addition = `${t.username} Удалён`
+    })
+    .catch((err) => {
+      addition = `<b>Ошибка:</b> ${err.message}.`
+      console.log(err)
+    })
+
+  const { page } = paginator(ctx, ctx.i18n.t('back'), 'back')
+
+  const twitters = ctx.session.user.twitters.slice(page * 6, (page + 1) * 6).map((v) => {
+    return Markup.callbackButton(v.screen_name, `choseTwitter=${v.id}`)
+  })
+
+  ctx.reply(addition + ctx.i18n.t('twitterMenu', {
+    twitters: `<b>${ctx.session.user.twitters.length}</b>`,
+    fin: finWord(ctx.session.user.twitters.length)
+  }),
+  Markup.inlineKeyboard(twitters.concat(buttons), {
+    wrap: (btn, i, currentRow) => (currentRow.length === 2 && i < twitters.length) || i === twitters.length
+  }).extra({ parse_mode: 'HTML', disable_web_page_preview: true })
+  ).catch((error) => console.log(ctx.from.id, error))
+})
 // объединить
 
 twitterMenu.action(/>|</, (ctx) => {
