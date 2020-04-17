@@ -16,12 +16,12 @@ const handleSendMessage = (bot, { twitter, post, groups = [], settings }) => {
 
     let sendedMessage
     const replyToId = message.reply_ids[group]
-    console.log(encodeURIComponent(group))
-    console.log(message.reply_ids[group])
+    // console.log(encodeURIComponent(group))
+    // console.log(message.reply_ids[group])
     console.timeEnd(i)
 
     try {
-      if (message.method === 'sendMessage') {
+      if (message.method === 'sendMessage' && message.text) {
         sendedMessage = await bot.telegram[message.method](group, message.text, {
           parse_mode: 'HTML',
           disable_web_page_preview: message.preview,
@@ -205,8 +205,13 @@ class Message {
   }
 
   getMedia () {
-    let extendedEntities = this.tweet.quoted_status ? this.tweet.quoted_status.extended_entities : this.tweet.extended_entities
-    extendedEntities = this.tweet.retweeted_status ? this.tweet.retweeted_status.extended_entities : extendedEntities
+    let extendedEntities
+    if (!this.settings.onlyMedia) {
+      extendedEntities = this.tweet.quoted_status ? this.tweet.quoted_status.extended_entities : this.tweet.extended_entities
+    }
+    if (this.settings.retweets) {
+      extendedEntities = this.tweet.retweeted_status ? this.tweet.retweeted_status.extended_entities : extendedEntities
+    }
     extendedEntities = this.tweet.extended_entities ? this.tweet.extended_entities : extendedEntities
     let medias = ''
 
