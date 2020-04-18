@@ -199,15 +199,17 @@ db.Twitter.delete = async (ctx) => {
     .populate('groups')
 
   // const groups = [...new Set(twitter.groups.map((post) => post.user.id_str))]
-  const users = await db.User.find({ tree: ctx.match[1] })
+  // { "tree.19213516": {$exists: true} }
+  const users = await db.User.find({ [`tree.${ctx.match[1]}`]: { $exists: true } })
+  console.log(users)
 
-  await db.Twitter.deleteOne({
-    _id: ctx.session.user.groups[ctx.session.group].id
-  })
+  // await db.Twitter.deleteOne({
+  //   _id: ctx.session.user.groups[ctx.session.group].id
+  // })
 
-  delete ctx.session.user.tree[ctx.match[1]]
+  // delete ctx.session.user.tree[ctx.match[1]]
 
-  ctx.session.user = ctx.session.user.save()
+  // ctx.session.user = ctx.session.user.save()
   return twitter
 }
 

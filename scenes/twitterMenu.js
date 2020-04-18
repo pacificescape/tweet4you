@@ -4,6 +4,7 @@ const { finWord } = require('../helpers')
 // const Extra = require('telegraf/extra')
 
 const twitterMenu = new Scene('twitterMenu')
+const pageLength = 10
 let buttons
 let editTwitterButtons
 
@@ -22,7 +23,7 @@ function paginator (ctx, yaml, cbq) {
 function mainTwitterPage (ctx) {
   const { page } = paginator(ctx, ctx.i18n.t('back'), 'back')
 
-  const twitters = ctx.session.user.twitters.slice(page * 6, (page + 1) * 6).map((v) => {
+  const twitters = ctx.session.user.twitters.slice(page * pageLength, (page + 1) * pageLength).map((v) => {
     return Markup.callbackButton(v.screen_name, `choseTwitter=${v.id}`)
   })
 
@@ -39,7 +40,7 @@ function mainTwitterPage (ctx) {
 // ENTER
 
 twitterMenu.enter((ctx) => {
-  ctx.session.pages = Math.ceil(ctx.session.user.twitters.length / 6)
+  ctx.session.pages = Math.ceil(ctx.session.user.twitters.length / pageLength)
   ctx.session.page = 0
 
   mainTwitterPage(ctx)
@@ -60,12 +61,12 @@ twitterMenu.action(/choseTwitter=(.+)/, (ctx) => {
   })
   groups.filter(e => e)
 
-  ctx.session.pages = Math.ceil(ctx.session.user.twitters.length / 6)
+  ctx.session.pages = Math.ceil(ctx.session.user.twitters.length / pageLength)
   ctx.session.page = 0
 
   const { page } = paginator(ctx, ctx.i18n.t('back'), 'backToMain')
 
-  groups = groups.slice(page * 6, (page + 1) * 6).map((I) => {
+  groups = groups.slice(page * pageLength, (page + 1) * pageLength).map((I) => {
     return Markup.callbackButton(ctx.session.user.groups[I].username, `choseGroup=${I}`)
   })
 
@@ -177,7 +178,7 @@ twitterMenu.action(/Delete=(.+)/, async (ctx) => {
 
   const { page } = paginator(ctx, ctx.i18n.t('back'), 'back')
 
-  const twitters = ctx.session.user.twitters.slice(page * 6, (page + 1) * 6).map((v) => {
+  const twitters = ctx.session.user.twitters.slice(page * pageLength, (page + 1) * pageLength).map((v) => {
     return Markup.callbackButton(v.screen_name, `choseTwitter=${v.id}`)
   })
 
@@ -226,7 +227,7 @@ twitterMenu.hears(/twitter.com/, (ctx) => {
           Markup.callbackButton(ctx.i18n.t('back'), 'reenter'),
           Markup.callbackButton('>', '>')
         ]), {
-          wrap: (btn, index, currentRow) => (currentRow.length === 2 && index < 6) // || index === editTwitterButtons().length
+          wrap: (btn, index, currentRow) => (currentRow.length === 2 && index < pageLength) // || index === editTwitterButtons().length
         }).extra({ parse_mode: 'HTML', reply_to_message_id: ctx.message.message_id, disable_web_page_preview: true }))
     })
     .catch((err) => {

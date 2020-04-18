@@ -3,6 +3,7 @@ const Markup = require('telegraf/markup')
 // const isAdmin = require('../helpers/isAdmin')
 const groupsMenu = new Scene('groupsMenu')
 const { finWord } = require('../helpers')
+const pageLength = 10
 let buttons
 
 function paginator (ctx, yaml, cbq) {
@@ -18,10 +19,11 @@ function paginator (ctx, yaml, cbq) {
 }
 
 function mainGroupsPage (ctx, addition) {
+  ctx.session.pages = Math.ceil(ctx.session.user.groups.length / pageLength)
   addition = addition || ''
   const { page } = paginator(ctx, ctx.i18n.t('back'), 'back')
 
-  const groups = ctx.session.user.groups.slice(page * 6, (page + 1) * 6).map((v) => {
+  const groups = ctx.session.user.groups.slice(page * pageLength, (page + 1) * pageLength).map((v) => {
     return Markup.callbackButton(v.username, `group=${v.username}`)
   })
 
@@ -36,7 +38,7 @@ function mainGroupsPage (ctx, addition) {
 }
 
 groupsMenu.enter((ctx) => {
-  ctx.session.pages = Math.ceil(ctx.session.user.groups.length / 6)
+  ctx.session.pages = Math.ceil(ctx.session.user.groups.length / pageLength)
   ctx.session.page = 0
 
   mainGroupsPage(ctx)
@@ -57,7 +59,7 @@ groupsMenu.hears(/t.me\/(.+)|@(.+)/, async (ctx) => {
   // mainGroupsPage(ctx, addition)
   const { page } = paginator(ctx, ctx.i18n.t('back'), 'back')
 
-  const groups = ctx.session.user.groups.slice(page * 6, (page + 1) * 6).map((v) => {
+  const groups = ctx.session.user.groups.slice(page * pageLength, (page + 1) * pageLength).map((v) => {
     return Markup.callbackButton(v.username, `group=${v.username}`)
   })
 
@@ -109,7 +111,7 @@ groupsMenu.action(/activate=(.+)/, async (ctx) => {
   await ctx.state.db.Twitter.activate(ctx, twitter, group)
 
   ctx.session.user = await ctx.state.db.User.update(ctx)
-
+  ctx.session.page = 0
   showTwitters(ctx)
 })
 
@@ -149,11 +151,40 @@ groupsMenu.action(/>|</, (ctx) => {
   mainGroupsPage(ctx) // switch
 })
 
+groupsMenu.action(/tw\+|tw-/, (ctx) => {
+  switch (ctx.match[0]) {
+    case 'tw-':
+      if (ctx.session.page > 0) {
+        ctx.session.page -= 1
+      }
+      break
+    case 'tw+':
+      if (ctx.session.page < ctx.session.pages) {
+        ctx.session.page += 1
+      }
+      break
+    default:
+      return
+  }
+
+  showTwitters(ctx) // switch
+})
+
 async function showTwitters (ctx) {
-  const buttons = [
+  // const buttons = [
+  //   Markup.callbackButton(ctx.i18n.t('back'), 'group'),
+  //   Markup.callbackButton(ctx.i18n.t('delete'), 'delete')
+  // ]
+  ctx.session.pages = Math.ceil(ctx.session.user.twitters.length / pageLength)
+
+  const { page, pages } = ctx.session
+
+  buttons = [
     Markup.callbackButton(ctx.i18n.t('back'), 'group'),
-    Markup.callbackButton(ctx.i18n.t('delete'), 'delete')
-  ]
+    Markup.callbackButton(ctx.i18n.t('delete'), 'delete'),
+    page !== 0 ? Markup.callbackButton('<', 'tw-') : null,
+    page !== pages - 1 ? Markup.callbackButton('>', 'tw+') : null
+  ].filter(e => e)
 
   const group = ctx.session.user.groups.find((gr) => gr.username === ctx.session.group)
 
@@ -161,7 +192,7 @@ async function showTwitters (ctx) {
 
   await ctx.session.user.twitters.forEach(v => v.populate('groups'))
 
-  const twitters = ctx.session.user.twitters.map((v, i) => {
+  const twitters = ctx.session.user.twitters.slice(page * pageLength, (page + 1) * pageLength).map((v, i) => {
     const enabled = getGroup(v, group.username)
     return Markup.callbackButton(`${v.screen_name} ${enabled ? '✅' : '❌'}`, `${enabled ? `deactivate=${i}` : `activate=${i}`}`)
   })
