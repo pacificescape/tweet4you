@@ -8,8 +8,8 @@ const auth = require('../OAuth')
  *  limit: 15 requests in 15-min window (user auth)
 */
 
-module.exports = () => {
-  const url = 'https://api.twitter.com/1.1/lists/list.json'
+module.exports = (id) => {
+  const url = `https://api.twitter.com/1.1/lists/list.json?list_id=${id}`
   try {
     return got(url, {
       headers: auth(url),

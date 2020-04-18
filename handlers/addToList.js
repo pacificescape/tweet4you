@@ -1,7 +1,7 @@
 const { listMembersCreate } = require('../API')
 
-module.exports = async (ctx, twitter) => {
+module.exports = async (listId, twitterId) => {
   // ctx.state.db.List.findAll
 
-  return listMembersCreate(twitter.list, twitter.id)
+  return listMembersCreate(listId, twitterId)
 }

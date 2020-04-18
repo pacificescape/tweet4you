@@ -22,6 +22,7 @@ const userSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Group'
   }],
+  tree: Object,
   locale: {
     type: String,
     default: 'ru'

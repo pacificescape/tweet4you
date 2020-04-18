@@ -5,6 +5,7 @@ const parseLink = require('../helpers/parseLink')
 const { addToList } = require('../handlers')
 const {
   usersShow,
+  listsList,
   listsCreate
 } = require('../API')
 const {
@@ -88,11 +89,11 @@ db.Twitter.upToDate = async (ctx) => {
     twitter.last_status = fetchedTw.status
     twitter.users.addToSet(ctx.session.user)
 
+    twitter = await twitter.save().catch((error) => console.log(ctx.session.user.username, error))
+
     ctx.session.user.twitters.addToSet(twitter)
 
     await ctx.session.user.save().catch((error) => console.log(ctx.session.user.username, error))
-
-    twitter = await twitter.save().catch((error) => console.log(ctx.session.user.username, error))
 
     return twitter
   }
@@ -138,37 +139,58 @@ db.Twitter.settings = async (twitterId, groupId, option) => {
   group.save().then(g => console.log(g))
 }
 
-db.Twitter.activate = async (twitter, group) => {
-  await db.Twitter.findByIdAndUpdate(twitter._id, {
-    $push: {
-      groups: group
-    }
-  })
+db.Twitter.activate = async (ctx, twitter, group) => {
+  // await db.Group.findByIdAndUpdate(group._id, {
+  //   $push: {
+  //     twitters: twitter
+  //   },
+  //   $set: {
+  //     ['settings.' + twitter.id]: {
+  //       link: true,
+  //       name: true,
+  //       retweets: true,
+  //       from: true,
+  //       replies: true,
+  //       images: true,
+  //       videos: true,
+  //       onlyText: false,
+  //       onlyMedia: false,
+  //       clearMedia: false
+  //     }
+  //   }
+  // })
 
-  await db.Group.findByIdAndUpdate(group._id, {
-    $push: {
-      twitters: twitter
-    },
-    $set: {
-      ['settings.' + twitter.id]: {
-        link: true,
-        name: true,
-        retweets: true,
-        from: true,
-        replies: true,
-        images: true,
-        videos: true,
-        onlyText: false,
-        onlyMedia: false,
-        clearMedia: false
-      }
+  group.twitters = group.twitters.concat(twitter)
+  group.settings = {
+    ...group.settings,
+    [twitter.id]: {
+      link: true,
+      name: true,
+      retweets: true,
+      from: true,
+      replies: true,
+      images: true,
+      videos: true,
+      onlyText: false,
+      onlyMedia: false,
+      clearMedia: false
     }
-  })
+  }
+  await group.save().catch((err) => console.log(err))
+
+  ctx.session.user.tree[twitter.id] = []
+  ctx.session.user.tree[twitter.id].push(group.username)
+  ctx.session.user = await ctx.session.user.save().catch((err) => console.log(err))
 
   if (!twitter.list) {
     const list = await db.List.getIncomplete()
-    return await addToList(list.id_str, twitter.id).catch((err) => console.log(err))
+    const added = await addToList(list.list_id, twitter.id).catch((err) => console.log(err))
+    list.member_count = added.member_count
+    twitter.list = added.id_str
+    await list.save().catch((err) => console.log(err))
   }
+  twitter.groups = twitter.groups.concat(group)
+  await twitter.save().catch((err) => console.log(err))
 }
 
 db.Twitter.delete = async (ctx) => {
@@ -176,14 +198,17 @@ db.Twitter.delete = async (ctx) => {
     .populate('users')
     .populate('groups')
 
-    const groups = [...new Set(posts.map((post) => post.user.id_str))]
+  // const groups = [...new Set(twitter.groups.map((post) => post.user.id_str))]
+  const users = await db.User.find({ tree: ctx.match[1] })
 
   await db.Twitter.deleteOne({
     _id: ctx.session.user.groups[ctx.session.group].id
   })
-  const title = ctx.session.user.groups[ctx.session.group].title
-  ctx.session.user = await db.User.update(ctx)
-  return title
+
+  delete ctx.session.user.tree[ctx.match[1]]
+
+  ctx.session.user = ctx.session.user.save()
+  return twitter
 }
 
 // Group methods
@@ -278,7 +303,7 @@ db.List.create = async () => {
 }
 
 db.List.getIncomplete = async () => {
-  let list = db.List.findOne({ member_count: { $lt: 100 } })
+  let list = await db.List.findOne({ member_count: { $lt: 100 } })
 
   if (!list) {
     const date = new Date()
@@ -286,6 +311,19 @@ db.List.getIncomplete = async () => {
   }
 
   return list
+}
+
+db.List.update = async (id) => {
+  const list = await db.List.findOne({ list_id: id })
+  const newList = await listsList(id)
+
+  list.list_id = newList.id_str
+  list.full_name = newList.full_name
+  list.name = newList.name
+  list.member_count = newList.member_count
+  list.created = newList.created_at
+
+  return await list.save()
 }
 
 module.exports = {
@@ -323,15 +361,38 @@ module.exports = {
 // updateSettings()
 
 // const updateSettings = async () => {
-//   const twitters = await db.Twitter.find()
+//   const users = await db.User.find()
+//     .populate('groups')
+//     .populate('twitters')
 
-//   twitters.forEach((twitter) => {
-//     twitter.list = process.env.LIST_ID
-
-//     twitter.save().then((data) => {
-//       console.log(data)
-//     })
+// users.forEach((user) => {
+//   user.tree = {}
+//   const prom = user.twitters.map(async (twitter) => {
+//     user.tree[twitter.id] = []
+//     const tw = await db.Twitter.findOne({ id: twitter.id }).populate('groups')
+//     for (const g of tw.groups) {
+//       if (user.groups.find((gr) => gr.username === g.username)) {
+//         user.tree[twitter.id].push(g.username)
+//       }
+//     }
+//     return ''
 //   })
+//   Promise.all(prom).then((a) => user.save())
+// })
+// }
+
+// const updateSettings = async () => {
+//   const { listsList } = require('../API')
+//   const list = new db.List()
+//   const newList = await listsList()
+
+//   list.list_id = newList.id_str
+//   list.full_name = newList.full_name
+//   list.name = newList.name
+//   list.member_count = newList.member_count
+//   list.created = newList.created_at
+
+//   return await list.save()
 // }
 
 // updateSettings()

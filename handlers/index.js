@@ -1,10 +1,10 @@
 const handleTwitterPolling = require('./handleTwitterPolling')
 const ListPolling = require('./ListPolling')
-const addToList = require('./addToList')
-const handleAddTwitter = require('./handleAddTwitter')
 const handleSendMessage = require('./handleSendMessage')
-const sendInvite = require('./sendInvite')
+const handleAddTwitter = require('./handleAddTwitter')
 const getListQuery = require('./getListQuery')
+const sendInvite = require('./sendInvite')
+const addToList = require('./addToList')
 
 module.exports = {
   handleTwitterPolling,

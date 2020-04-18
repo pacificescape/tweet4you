@@ -6,7 +6,8 @@ const twitterSchema = mongoose.Schema({
   id: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    sparse: true
   },
   last_status: {
     type: Object

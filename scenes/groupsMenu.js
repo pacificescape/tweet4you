@@ -106,7 +106,7 @@ groupsMenu.action(/activate=(.+)/, async (ctx) => {
   const twitter = ctx.session.user.twitters[ctx.match[1]]
   const group = ctx.session.user.groups.find((gr) => gr.username === ctx.session.group)
 
-  await ctx.state.db.Twitter.activate(twitter, group)
+  await ctx.state.db.Twitter.activate(ctx, twitter, group)
 
   ctx.session.user = await ctx.state.db.User.update(ctx)
 
