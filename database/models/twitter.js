@@ -22,7 +22,8 @@ const twitterSchema = mongoose.Schema({
     ref: 'Group'
   }],
   posts: {
-    type: Object
+    type: Object,
+    default: {}
   },
   locale: String,
   counter: Number

@@ -140,26 +140,6 @@ db.Twitter.settings = async (twitterId, groupId, option) => {
 }
 
 db.Twitter.activate = async (ctx, twitter, group) => {
-  // await db.Group.findByIdAndUpdate(group._id, {
-  //   $push: {
-  //     twitters: twitter
-  //   },
-  //   $set: {
-  //     ['settings.' + twitter.id]: {
-  //       link: true,
-  //       name: true,
-  //       retweets: true,
-  //       from: true,
-  //       replies: true,
-  //       images: true,
-  //       videos: true,
-  //       onlyText: false,
-  //       onlyMedia: false,
-  //       clearMedia: false
-  //     }
-  //   }
-  // })
-
   group.twitters = group.twitters.concat(twitter)
   group.settings = {
     ...group.settings,
@@ -189,7 +169,10 @@ db.Twitter.activate = async (ctx, twitter, group) => {
     twitter.list = added.id_str
     await list.save().catch((err) => console.log(err))
   }
-  twitter.groups = twitter.groups.concat(group)
+
+  twitter.groups = twitter.groups.addToSet(group)
+  twitter.posts[group.username] = twitter.posts[group.username] || {}
+
   await twitter.save().catch((err) => console.log(err))
 }
 

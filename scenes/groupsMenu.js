@@ -111,7 +111,6 @@ groupsMenu.action(/activate=(.+)/, async (ctx) => {
   await ctx.state.db.Twitter.activate(ctx, twitter, group)
 
   ctx.session.user = await ctx.state.db.User.update(ctx)
-  ctx.session.page = 0
   showTwitters(ctx)
 })
 
@@ -194,7 +193,7 @@ async function showTwitters (ctx) {
 
   const twitters = ctx.session.user.twitters.slice(page * pageLength, (page + 1) * pageLength).map((v, i) => {
     const enabled = getGroup(v, group.username)
-    return Markup.callbackButton(`${v.screen_name} ${enabled ? '✅' : '❌'}`, `${enabled ? `deactivate=${i}` : `activate=${i}`}`)
+    return Markup.callbackButton(`${v.screen_name} ${enabled ? '✅' : '❌'}`, `${enabled ? `deactivate=${i + page * pageLength}` : `activate=${i + page * pageLength}`}`)
   })
 
   ctx.editMessageText(ctx.i18n.t('group.toggle_posting', {
