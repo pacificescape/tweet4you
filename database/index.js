@@ -170,7 +170,7 @@ db.Twitter.activate = async (ctx, twitter, group) => {
     await list.save().catch((err) => console.log(err))
   }
 
-  twitter.groups = twitter.groups.addToSet(group)
+  twitter.groups.addToSet(group)
   twitter.posts[group.username] = twitter.posts[group.username] || {}
 
   await twitter.save().catch((err) => console.log(err))
@@ -181,18 +181,9 @@ db.Twitter.delete = async (ctx) => {
     .populate('users')
     .populate('groups')
 
-  // const groups = [...new Set(twitter.groups.map((post) => post.user.id_str))]
-  // { "tree.19213516": {$exists: true} }
   const users = await db.User.find({ [`tree.${ctx.match[1]}`]: { $exists: true } })
   console.log(users)
 
-  // await db.Twitter.deleteOne({
-  //   _id: ctx.session.user.groups[ctx.session.group].id
-  // })
-
-  // delete ctx.session.user.tree[ctx.match[1]]
-
-  // ctx.session.user = ctx.session.user.save()
   return twitter
 }
 
@@ -215,7 +206,7 @@ db.Group.check = async (username) => {
   return group
 }
 
-db.Group.update = async (ctx) => { // first time
+db.Group.update = async (ctx) => {
   const group = await db.Group.check(ctx.match[1])
 
   group.telegram_id = ctx.chat.id

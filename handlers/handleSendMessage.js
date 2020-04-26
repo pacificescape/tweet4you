@@ -186,7 +186,7 @@ class Message {
     } else if (this.tweet.retweeted_status) {
       text.push(`${this.settings.name ? `<a href="${linkMyself}">${this.tweet.user.name}</a>` + ' ' : ''}`)
       text.push('#retweet ')
-      text.push(`${this.settings.from ? `from <a href="${this.linkToUser(this.tweet.retweeted_status.user.screen_name)}">${this.tweet.retweeted_status.user.name}</a>` : ''}`)
+      text.push(`${this.settings.from ? `from <a href="${this.linkToUser(this.tweet.retweeted_status.user.screen_name)}">${this.tweet.retweeted_status.user.name}</a> ` : ''}`)
       text.push(`${textRt ? '\n' + textRt + '\n\n' : ''}`) // ${reply}
       text.push(`${this.settings.link ? `<a href="${linkToPost}">Twitter</a>` : ''}`)
     } else {
