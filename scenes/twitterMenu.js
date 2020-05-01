@@ -191,6 +191,7 @@ twitterMenu.action(/Delete=(.+)/, async (ctx) => {
   }).extra({ parse_mode: 'HTML', disable_web_page_preview: true })
   ).catch((error) => console.log(ctx.from.id, error))
 })
+
 // объединить
 
 twitterMenu.action(/>|</, (ctx) => {

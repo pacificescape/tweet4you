@@ -221,7 +221,8 @@ class Message {
       medias = extendedEntities.media.map((media) => {
         const type = media.type
         switch (type) {
-          case 'video' || 'animated_gif':
+          case 'video':
+          case 'animated_gif':
             media.video_info.variants.find((v) => {
               if (v.content_type === 'video/mp4') {
                 media = v.url
@@ -249,7 +250,6 @@ class Message {
 
     if (medias.length === 1) {
       this.type = medias[0].type
-      return medias[0].media
     }
 
     if (this.settings.onlyMedia && medias) { // ??
@@ -264,20 +264,20 @@ class Message {
 
     if (this.settings.onlyText) {
       this.media = ''
+      return method
     }
 
-    if (Array.isArray(this.media)) {
+    if (this.media.length > 1) {
       method = 'sendMediaGroup' // (chatId, media, [extra])
     } else {
+      this.media = this.media[0] ? this.media[0].media : ''
       switch (this.type) {
         case 'photo':
           method = 'sendPhoto'// (chatId, photo, [extra])
           break
-        case 'animation':
-          method = 'sendAnimation'// (chatId, animation, [extra])
-          break
+        case 'animated_gif':
         case 'video':
-          method = 'sendVideo'// (chatId, question, options, [extra])
+          method = 'sendVideo'
           break
       }
     }
