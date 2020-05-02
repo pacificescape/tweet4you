@@ -302,6 +302,19 @@ db.List.update = async (id) => {
   return await list.save()
 }
 
+db.List.setSinceId = async (list, sinceId) => {
+  list.since_id = sinceId
+
+  list.save().catch(error => console.log(error))
+}
+
+db.List.getList = async (listId) => {
+  const list = await db.List.findOne({ list_id: listId })
+    .populate('twitters')
+
+  return list
+}
+
 module.exports = {
   db
 }

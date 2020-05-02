@@ -104,6 +104,9 @@ groupsMenu.action(/activate=(.+)/, async (ctx) => {
 
 groupsMenu.action('main', (ctx) => ctx.scene.enter('mainMenu'))
 groupsMenu.action('group', (ctx) => mainGroupsPage(ctx))
+groupsMenu.action('|', (ctx) => {
+  ctx.answerCbQuery()
+})
 groupsMenu.action('delete', async (ctx) => {
   let addition
 
@@ -168,10 +171,16 @@ async function showTwitters (ctx) {
 
   buttons = [
     Markup.callbackButton(ctx.i18n.t('back'), 'group'),
-    Markup.callbackButton(ctx.i18n.t('delete'), 'delete'),
-    page !== 0 ? Markup.callbackButton('<', 'tw-') : null,
-    page !== pages - 1 ? Markup.callbackButton('>', 'tw+') : null
+    page !== 0 ? Markup.callbackButton('<', 'tw-') : Markup.callbackButton('|', '|'),
+    page !== pages - 1 ? Markup.callbackButton('>', 'tw+') : Markup.callbackButton('|', '|')
   ].filter(e => e)
+
+  // const buttons = pages === 1 ? [Markup.callbackButton(yaml, cbq)]
+  //   : [
+  //     Markup.callbackButton(yaml, cbq),
+  //     page !== 0 ? Markup.callbackButton('<', '<') : Markup.callbackButton('|', '|'),
+  //     page !== pages - 1 ? Markup.callbackButton('>', '>') : Markup.callbackButton('|', '|')
+  //   ].filter(e => e)
 
   const group = ctx.session.user.groups.find((gr) => gr.username === ctx.session.group)
 
@@ -188,8 +197,8 @@ async function showTwitters (ctx) {
     username: group.username
   }),
   Markup.inlineKeyboard(twitters.concat(buttons), {
-    wrap: (btn, index, currentRow) => {
-      return currentRow.length === 2 || index === twitters.length
+    wrap: (btn, i, currentRow) => {
+      return (currentRow.length === 2 && i < twitters.length) || i === twitters.length
     }
   }).extra({ parse_mode: 'HTML' })
   )

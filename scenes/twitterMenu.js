@@ -155,6 +155,9 @@ twitterMenu.action(/setting=(.+)=(.+)/, (ctx) => {
 
 twitterMenu.action('back', (ctx) => ctx.scene.enter('mainMenu'))
 twitterMenu.action('reenter', (ctx) => mainTwitterPage(ctx))
+twitterMenu.action('|', (ctx) => {
+  ctx.answerCbQuery()
+})
 
 twitterMenu.action(/Delete=(.+)/, async (ctx) => {
   let addition = ''

@@ -32,9 +32,7 @@ class ListPolling {
   }
 
   updateList () {
-    this.list.since_id = this.new_since_id
-
-    this.list.save().catch(error => console.log(error))
+    this.db.List.setSinceId(this.list, this.new_since_id)
   }
 
   /**
@@ -53,7 +51,7 @@ class ListPolling {
 
     this.list_id = ids[this.counter % ids.length]
 
-    this.list = await this.db.List.findOne({ list_id: this.list_id })
+    this.list = await this.db.List.getList(this.list_id)
 
     console.log('ListPolling: ', this.list_id, ` ${this.counter++}`, new Date().toLocaleTimeString('it-IT'))
     try {
