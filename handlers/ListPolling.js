@@ -14,8 +14,7 @@ const lists = new LRU({ maxAge: 1000 * 60 * 5 })
 */
 
 class ListPolling {
-  constructor (bot, db) {
-    this.bot = bot
+  constructor (db) {
     this.db = db
     this.job = new CronJob(frequency, this.cronPolling, null, false, 'America/Los_Angeles', this)
     this.counter = 0
@@ -24,13 +23,25 @@ class ListPolling {
   async getTwitters (posts) {
     const ids = [...new Set(posts.map((post) => post.user.id_str))]
 
-    const twitters = await Promise.all(ids.map((id) => {
+    const twitters = await Promise.all(ids.map((id) => { // брать твиттеры только из списка, обновление last_status_id в list.js
       return this.db.Twitter.findOne({ id })
         .populate('groups')
     }))
 
     return twitters.filter(e => e)
   }
+
+  updateList () {
+    this.list.since_id = this.new_since_id
+
+    this.list.save().catch(error => console.log(error))
+  }
+
+  /**
+   *
+   * poll twitter list
+   *
+  */
 
   async cronPolling () {
     let ids = lists.get('list_ids')
@@ -42,11 +53,14 @@ class ListPolling {
 
     this.list_id = ids[this.counter % ids.length]
 
+    this.list = await this.db.List.findOne({ list_id: this.list_id })
+
     console.log('ListPolling: ', this.list_id, ` ${this.counter++}`, new Date().toLocaleTimeString('it-IT'))
     try {
-      let posts = await listStatuses(this.list_id)
+      let posts = await listStatuses(this.list_id, this.list.since_id)
       const twitters = await this.getTwitters(posts)
       const newPosts = []
+      this.new_since_id = posts.length > 0 ? posts[0].id_str : this.list.since_id
 
       posts = posts.reverse()
 
@@ -69,8 +83,9 @@ class ListPolling {
       })
 
       if (newPosts.length > 0) {
+        const last = newPosts.length - 1
         newPosts.map((newPost, i) => {
-          setTimeout(() => handleSendMessage(this.bot, newPost), i * 2000)
+          setTimeout(() => handleSendMessage(newPost, i === last ? this.updateList.bind(this) : null), i * 2000)
         })
       }
     } catch (err) {

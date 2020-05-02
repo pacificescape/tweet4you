@@ -1,8 +1,10 @@
 const { statusesShow } = require('../API')
 
-const handleSendMessage = (bot, { twitter, post, groups = [], settings }) => {
+const handleSendMessage = ({ twitter, post, groups = [], settings }, updateList) => {
+  const { bot } = require('../bot')
   const tweet = post
   console.time(`${twitter.screen_name} ${post.id_str} (${groups.length})`)
+
   const sendPromises = groups.map(async (group, i) => {
     const setting = settings[group][tweet.user.id_str] || {}
 
@@ -67,6 +69,9 @@ const handleSendMessage = (bot, { twitter, post, groups = [], settings }) => {
     console.log(array)
     console.timeLog(`${twitter.screen_name} ${post.id_str} (${groups.length})`)
     twitter.save()
+    if (typeof updateList === 'function') {
+      updateList()
+    }
   })
 }
 

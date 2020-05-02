@@ -11,6 +11,10 @@ const listSchema = Schema({
   full_name: String,
   name: String,
   member_count: Number,
+  since_id: {
+    type: String,
+    default: '1'
+  },
   twitters: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Twitter'

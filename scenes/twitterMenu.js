@@ -1,27 +1,19 @@
 const Scene = require('telegraf/scenes/base')
+// const WizardScene = require('telegraf/scenes/wizard')
+// const { Composer } = require('@telegraf/core')
 const Markup = require('telegraf/markup')
-const { finWord } = require('../helpers')
+const { finWord, paginator } = require('../helpers')
 // const Extra = require('telegraf/extra')
+
+// const composer = new Composer()
 
 const twitterMenu = new Scene('twitterMenu')
 const pageLength = 10
 let buttons
 let editTwitterButtons
 
-function paginator (ctx, yaml, cbq) {
-  const { page, pages } = ctx.session
-
-  buttons = [
-    Markup.callbackButton(yaml, cbq),
-    page !== 0 ? Markup.callbackButton('<', '<') : null,
-    page !== pages - 1 ? Markup.callbackButton('>', '>') : null
-  ].filter(e => e)
-
-  return { page, pages }
-}
-
 function mainTwitterPage (ctx) {
-  const { page } = paginator(ctx, ctx.i18n.t('back'), 'back')
+  const { buttons, page } = paginator(ctx, ctx.i18n.t('back'), 'back')
 
   const twitters = ctx.session.user.twitters.slice(page * pageLength, (page + 1) * pageLength).map((v) => {
     return Markup.callbackButton(v.screen_name, `choseTwitter=${v.id}`)
@@ -64,7 +56,7 @@ twitterMenu.action(/choseTwitter=(.+)/, (ctx) => {
   ctx.session.pages = Math.ceil(ctx.session.user.twitters.length / pageLength)
   ctx.session.page = 0
 
-  const { page } = paginator(ctx, ctx.i18n.t('back'), 'backToMain')
+  const { buttons, page } = paginator(ctx, ctx.i18n.t('back'), 'backToMain')
 
   groups = groups.slice(page * pageLength, (page + 1) * pageLength).map((I) => {
     return Markup.callbackButton(ctx.session.user.groups[I].username, `choseGroup=${I}`)
@@ -176,7 +168,7 @@ twitterMenu.action(/Delete=(.+)/, async (ctx) => {
       console.log(err)
     })
 
-  const { page } = paginator(ctx, ctx.i18n.t('back'), 'back')
+  const { buttons, page } = paginator(ctx, ctx.i18n.t('back'), 'back')
 
   const twitters = ctx.session.user.twitters.slice(page * pageLength, (page + 1) * pageLength).map((v) => {
     return Markup.callbackButton(v.screen_name, `choseTwitter=${v.id}`)

@@ -2,26 +2,14 @@ const Scene = require('telegraf/scenes/base')
 const Markup = require('telegraf/markup')
 // const isAdmin = require('../helpers/isAdmin')
 const groupsMenu = new Scene('groupsMenu')
-const { finWord } = require('../helpers')
+const { finWord, paginator } = require('../helpers')
 const pageLength = 10
 let buttons
-
-function paginator (ctx, yaml, cbq) {
-  const { page, pages } = ctx.session
-
-  buttons = [
-    Markup.callbackButton(yaml, cbq),
-    page !== 0 ? Markup.callbackButton('<', '<') : null,
-    page !== pages - 1 ? Markup.callbackButton('>', '>') : null
-  ].filter(e => e)
-
-  return { page, pages }
-}
 
 function mainGroupsPage (ctx, addition) {
   ctx.session.pages = Math.ceil(ctx.session.user.groups.length / pageLength)
   addition = addition || ''
-  const { page } = paginator(ctx, ctx.i18n.t('back'), 'back')
+  const { buttons, page } = paginator(ctx, ctx.i18n.t('back'), 'back')
 
   const groups = ctx.session.user.groups.slice(page * pageLength, (page + 1) * pageLength).map((v) => {
     return Markup.callbackButton(v.username, `group=${v.username}`)
@@ -57,7 +45,7 @@ groupsMenu.hears(/t.me\/(.+)|@(.+)/, async (ctx) => {
     })
 
   // mainGroupsPage(ctx, addition)
-  const { page } = paginator(ctx, ctx.i18n.t('back'), 'back')
+  const { buttons, page } = paginator(ctx, ctx.i18n.t('back'), 'back')
 
   const groups = ctx.session.user.groups.slice(page * pageLength, (page + 1) * pageLength).map((v) => {
     return Markup.callbackButton(v.username, `group=${v.username}`)
@@ -206,4 +194,5 @@ async function showTwitters (ctx) {
   }).extra({ parse_mode: 'HTML' })
   )
 }
+
 module.exports = groupsMenu
