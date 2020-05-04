@@ -183,20 +183,20 @@ class Message {
 
     text.push(`${this.reply ? `#reply\n<a href="${linkMyself}">${this.reply.name}:</a>${this.reply.full_text ? '\n' + this.reply.full_text : '🖼'}\n↓\n` : ''}`)
 
-    if (this.tweet.quoted_status) {
+    if (this.tweet.quoted_status) { // quoted_status
       text.push(`${this.settings.name ? ` <a href="${linkMyself}">${this.tweet.user.name}:</a> ` : ''}`)
       text.push(`${textTw ? `\n${textTw}\n↓\n` : ''}`) // ${reply}
       text.push(`${textQuo ? `<a href="${linkMyself}">${this.tweet.quoted_status.user.name}:</a>\n<i>${textQuo} </i>\n\n` : ''}`)
       text.push(`${this.settings.link ? `<a href="${linkToPost}">Twitter</a>` : ''}`)
-    } else if (this.tweet.retweeted_status) {
+    } else if (this.tweet.retweeted_status) { // retweeted_status
       text.push(`${this.settings.name ? `<a href="${linkMyself}">${this.tweet.user.name}</a>` + ' ' : ''}`)
       text.push('#retweet ')
       text.push(`${this.settings.from ? `from <a href="${this.linkToUser(this.tweet.retweeted_status.user.screen_name)}">${this.tweet.retweeted_status.user.name}</a> ` : ''}`)
       text.push(`${textRt ? '\n' + textRt + '\n\n' : ''}`) // ${reply}
       text.push(`${this.settings.link ? `<a href="${linkToPost}">Twitter</a>` : ''}`)
-    } else {
+    } else { // simple tweet
       text.push(`${(this.settings.name || this.reply) ? `<a href="${linkMyself}">${this.tweet.user.name}:</a> ` : ''}`)
-      text.push(`${textTw ? `\n${textTw}\n\n` : '🖼\n'}`) // ${reply}
+      text.push(`${textTw ? `\n${textTw}\n\n` : this.reply ? '🖼\n' : '\n'}`) // ${reply}
       text.push(`${this.settings.link ? `<a href="${linkToPost}">Twitter</a>` : ''}`)
     }
 
