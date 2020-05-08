@@ -136,7 +136,7 @@ db.Twitter.settings = async (twitterId, groupId, option) => {
     }
   })
 
-  group.save().then(g => console.log(g))
+  await group.save().then(g => console.log(g))
 }
 
 db.Twitter.activate = async (ctx, twitter, group) => {
@@ -305,7 +305,7 @@ db.List.update = async (id) => {
 db.List.setSinceId = async (list, sinceId) => {
   list.since_id = sinceId
 
-  list.save().catch(error => console.log(error))
+  await list.save().catch(error => console.log(error))
 }
 
 db.List.getList = async (listId) => {
@@ -341,7 +341,7 @@ module.exports = {
 //       )
 //     }
 
-//     group.save().then((data) => {
+//     await group.save().then((data) => {
 //       console.log(data)
 //     })
 //   })
@@ -366,7 +366,7 @@ module.exports = {
 //     }
 //     return ''
 //   })
-//   Promise.all(prom).then((a) => user.save())
+//   Promise.all(prom).then(async (a) => await user.save())
 // })
 // }
 

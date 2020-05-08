@@ -14,7 +14,7 @@ const handleSendMessage = ({ twitter, post, groups = [], settings }, updateList)
       return 'trash'
     }
 
-    await (() => new Promise(resolve => setTimeout(resolve, i * 1500)))()
+    await (() => new Promise(resolve => setTimeout(resolve, i * 2000)))()
 
     let sendedMessage
     const replyToId = message.reply_ids[group]
@@ -65,10 +65,10 @@ const handleSendMessage = ({ twitter, post, groups = [], settings }, updateList)
     return 'done'
   })
 
-  Promise.all(sendPromises).then((array) => {
+  Promise.all(sendPromises).then(async (array) => {
     console.log(array)
     console.timeLog(`${twitter.screen_name} ${post.id_str} (${groups.length})`)
-    twitter.save()
+    await twitter.save()
     if (typeof updateList === 'function') {
       updateList()
     }

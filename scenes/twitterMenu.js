@@ -41,40 +41,7 @@ twitterMenu.enter((ctx) => {
 // choseTwitter
 
 twitterMenu.action(/choseTwitter=(.+)/, (ctx) => {
-  ctx.session.twitter = ctx.match[1]
-  const twitter = ctx.session.user.twitters.find((tw) => tw.id === ctx.match[1])
-  let groups = []
-
-  twitter.groups.forEach((g) => {
-    const i = ctx.session.user.groups.findIndex((grUser) => grUser.username === g.username)
-    if (i !== -1) {
-      groups.push(i)
-    }
-  })
-  groups.filter(e => e)
-
-  ctx.session.pages = Math.ceil(ctx.session.user.twitters.length / pageLength)
-  ctx.session.page = 0
-
-  const { buttons, page } = paginator(ctx, ctx.i18n.t('back'), 'backToMain')
-
-  groups = groups.slice(page * pageLength, (page + 1) * pageLength).map((I) => {
-    return Markup.callbackButton(ctx.session.user.groups[I].username, `choseGroup=${I}`)
-  })
-
-  ctx.editMessageText(ctx.i18n.t('twitter.choseGroup', { // новый текст
-    twitter: `<b>${twitter.screen_name}</b>`,
-    groups: `<b>${groups.length}</b>`,
-    fin: (groups.length === 11 || groups.length % 10 !== 1) ? ctx.i18n.t('twitter.x2-9') : ctx.i18n.t('twitter.x1')
-  }),
-  Markup.inlineKeyboard(groups.concat(buttons), {
-    wrap: (btn, index, currentRow) => {
-      return currentRow.length === 2 || index === groups.length
-    }
-  }).extra({ parse_mode: 'HTML' })
-  )
-    .then((message) => { ctx.session.message_id = message.message_id }) /// ??????
-    .catch((error) => console.log(ctx.from.id, error))
+  ctx.scene.enter('choseTwitter')
 })
 
 // MANAGE
@@ -187,7 +154,7 @@ twitterMenu.action(/Delete=(.+)/, async (ctx) => {
   ).catch((error) => console.log(ctx.from.id, error))
 })
 
-// объединить
+// < >
 
 twitterMenu.action(/>|</, (ctx) => {
   switch (ctx.match[0]) {
