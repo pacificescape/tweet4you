@@ -1,6 +1,6 @@
 const Telegraf = require('telegraf')
-const session = require('telegraf/session')
-// const RedisSession = require('telegraf-session-redis')
+// const session = require('telegraf/session')
+const RedisSession = require('telegraf-session-redis')
 const path = require('path')
 const I18n = require('telegraf-i18n')
 const rateLimit = require('telegraf-ratelimit')
@@ -12,6 +12,13 @@ const menu = require('./scenes')
 const { ListPolling, sendInvite } = require('./handlers')
 const { isAdmin } = require('./helpers')
 // const { listShow } = require('./API')
+
+const session = new RedisSession({
+  store: {
+    host: process.env.TELEGRAM_SESSION_HOST || '127.0.0.1',
+    port: process.env.TELEGRAM_SESSION_PORT || 6379
+  }
+})
 
 global.startDate = new Date()
 
@@ -25,7 +32,7 @@ bot.telegram.getMe().then(me => { global.botId = me.id })
 
 // session
 
-bot.use(session({ ttl: 1200 }))
+bot.use(session) //({ ttl: 1200 })
 
 // rateLimit
 

@@ -75,9 +75,10 @@ choseTwitter.action(/>|</, (ctx) => {
 
 choseTwitter.action('twitterMenu', (ctx) => ctx.scene.enter('twitterMenu'))
 
-choseTwitter.leave(ctx => {
-  ctx.session.groups = []
-  ctx.session.twitter = ''
+choseTwitter.action(/choseGroup=(.+)/, async (ctx) => {
+  ctx.session.currentGroupIndex = ctx.match[1]
+  ctx.session.currentGroup = ctx.session.user.groups[ctx.match[1]].username
+  ctx.scene.enter('manageTwitter')
 })
 
 module.exports = choseTwitter
