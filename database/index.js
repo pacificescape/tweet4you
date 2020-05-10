@@ -91,7 +91,7 @@ db.Twitter.upToDate = async (ctx) => {
 
     twitter = await twitter.save().catch((error) => console.log(ctx.session.user.username, error))
 
-    ctx.session.user.twitters.addToSet(twitter)
+    ctx.session.user.twitters.addToSet(twitter) // addToSet
 
     await ctx.session.user.save().catch((error) => console.log(ctx.session.user.username, error))
 

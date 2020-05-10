@@ -5,6 +5,9 @@ const { listStatuses } = require('../API')
 const handleSendMessage = require('./handleSendMessage')
 const getListQuery = require('./getListQuery')
 const frequency = process.env.FREQUENCY || '*/60 * * * * *'
+const Queue = require('../helpers/queue')
+
+const queue = new Queue()
 
 const lists = new LRU({ maxAge: 1000 * 60 * 5 })
 /**
@@ -32,7 +35,7 @@ class ListPolling {
   }
 
   updateList () {
-    this.db.List.setSinceId(this.list, this.new_since_id)
+    return this.db.List.setSinceId(this.list, this.new_since_id)
   }
 
   /**
@@ -82,10 +85,12 @@ class ListPolling {
 
       if (newPosts.length > 0) {
         const last = newPosts.length - 1
-        newPosts.map((newPost, i) => {
-          setTimeout(() => handleSendMessage(newPost, i === last ? this.updateList.bind(this) : null), i * 2000)
+        newPosts.forEach((newPost, i) => {
+          queue.enqueue(newPost)
+          // setTimeout(() => handleSendMessage(newPost, i === last ? this.updateList.bind(this) : null), i * 2000)
         })
       }
+      await this.updateList()
     } catch (err) {
       console.log('List error', err)
     }

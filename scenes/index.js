@@ -4,8 +4,9 @@ const groupsMenu = require('./groupsMenu')
 const twitterMenu = require('./twitterMenu')
 const choseTwitter = require('./choseTwitter')
 const manageTwitter = require('./manageTwitter')
+const groupTwitters = require('./groupTwitters')
 
-const stage = new Stage([mainMenu, groupsMenu, twitterMenu, choseTwitter, manageTwitter])
+const stage = new Stage([mainMenu, groupsMenu, twitterMenu, choseTwitter, manageTwitter, groupTwitters])
 
 // stage.command('start', (ctx) => ctx.scene.enter('mainMenu'))
 stage.middleware()

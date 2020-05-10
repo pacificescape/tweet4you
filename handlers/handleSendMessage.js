@@ -1,6 +1,8 @@
 const { statusesShow } = require('../API')
 
-const handleSendMessage = ({ twitter, post, groups = [], settings }, updateList) => {
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+const handleSendMessage = ({ twitter, post, groups = [], settings }) => {
   const { bot } = require('../bot')
   const tweet = post
   console.time(`${twitter.screen_name} ${post.id_str} (${groups.length})`)
@@ -14,7 +16,7 @@ const handleSendMessage = ({ twitter, post, groups = [], settings }, updateList)
       return 'trash'
     }
 
-    await (() => new Promise(resolve => setTimeout(resolve, i * 2000)))()
+    // await sleep(i * 1500)
 
     let sendedMessage
     const replyToId = message.reply_ids[group]
@@ -69,9 +71,6 @@ const handleSendMessage = ({ twitter, post, groups = [], settings }, updateList)
     console.log(array)
     console.timeLog(`${twitter.screen_name} ${post.id_str} (${groups.length})`)
     await twitter.save()
-    if (typeof updateList === 'function') {
-      updateList()
-    }
   })
 }
 

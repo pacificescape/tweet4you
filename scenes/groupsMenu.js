@@ -65,45 +65,13 @@ groupsMenu.hears(/t.me\/(.+)|@(.+)/, async (ctx) => {
 
 groupsMenu.action(/group=(.+)/, (ctx) => {
   ctx.session.group = ctx.match[1]
-  showTwitters(ctx)
-})
-
-groupsMenu.action(/deactivate=(.+)/, async (ctx) => {
-  const twitter = ctx.session.user.twitters[ctx.match[1]]
-  const group = ctx.session.user.groups.find((gr) => gr.username === ctx.session.group)
-
-  const error = await ctx.state.db.Twitter.deactivate(twitter, group)
-
-  if (error) {
-    ctx.reply(error)
-    return
-  }
-
-  const twitters = group.twitters
-
-  const twitterIndex = twitters.reduce((a, c, i) => {
-    return c.valueOf() === twitter._id.valueOf() ? i : a
-  }, null)
-
-  twitters.splice(twitterIndex, 1)
-
-  ctx.session.user = await ctx.state.db.User.update(ctx)
-
-  showTwitters(ctx)
-})
-
-groupsMenu.action(/activate=(.+)/, async (ctx) => {
-  const twitter = ctx.session.user.twitters[ctx.match[1]]
-  const group = ctx.session.user.groups.find((gr) => gr.username === ctx.session.group)
-
-  await ctx.state.db.Twitter.activate(ctx, twitter, group)
-
-  ctx.session.user = await ctx.state.db.User.update(ctx)
-  showTwitters(ctx)
+  ctx.scene.enter('groupTwitters')
 })
 
 groupsMenu.action('main', (ctx) => ctx.scene.enter('mainMenu'))
-groupsMenu.action('group', (ctx) => mainGroupsPage(ctx))
+groupsMenu.action('group', (ctx) => {
+  mainGroupsPage(ctx)
+})
 groupsMenu.action('|', (ctx) => {
   ctx.answerCbQuery()
 })
@@ -140,68 +108,5 @@ groupsMenu.action(/>|</, (ctx) => {
 
   mainGroupsPage(ctx) // switch
 })
-
-groupsMenu.action(/tw\+|tw-/, (ctx) => {
-  switch (ctx.match[0]) {
-    case 'tw-':
-      if (ctx.session.page > 0) {
-        ctx.session.page -= 1
-      }
-      break
-    case 'tw+':
-      if (ctx.session.page < ctx.session.pages) {
-        ctx.session.page += 1
-      }
-      break
-    default:
-      return
-  }
-
-  showTwitters(ctx) // switch
-})
-
-async function showTwitters (ctx) {
-  // const buttons = [
-  //   Markup.callbackButton(ctx.i18n.t('back'), 'group'),
-  //   Markup.callbackButton(ctx.i18n.t('delete'), 'delete')
-  // ]
-  ctx.session.pages = Math.ceil(ctx.session.user.twitters.length / pageLength)
-
-  const { page, pages } = ctx.session
-
-  buttons = [
-    Markup.callbackButton(ctx.i18n.t('back'), 'group'),
-    page !== 0 ? Markup.callbackButton('<', 'tw-') : Markup.callbackButton('|', '|'),
-    page !== pages - 1 ? Markup.callbackButton('>', 'tw+') : Markup.callbackButton('|', '|')
-  ].filter(e => e)
-
-  // const buttons = pages === 1 ? [Markup.callbackButton(yaml, cbq)]
-  //   : [
-  //     Markup.callbackButton(yaml, cbq),
-  //     page !== 0 ? Markup.callbackButton('<', '<') : Markup.callbackButton('|', '|'),
-  //     page !== pages - 1 ? Markup.callbackButton('>', '>') : Markup.callbackButton('|', '|')
-  //   ].filter(e => e)
-
-  const group = ctx.session.user.groups.find((gr) => gr.username === ctx.session.group)
-
-  const getGroup = (v, u) => v.groups.reduce((a, c) => c.username === u ? true : a, false)
-
-  await ctx.session.user.twitters.forEach(v => v.populate('groups'))
-
-  const twitters = ctx.session.user.twitters.slice(page * pageLength, (page + 1) * pageLength).map((v, i) => {
-    const enabled = getGroup(v, group.username)
-    return Markup.callbackButton(`${v.screen_name} ${enabled ? '✅' : '❌'}`, `${enabled ? `deactivate=${i + page * pageLength}` : `activate=${i + page * pageLength}`}`)
-  })
-
-  ctx.editMessageText(ctx.i18n.t('group.toggle_posting', {
-    username: group.username
-  }),
-  Markup.inlineKeyboard(twitters.concat(buttons), {
-    wrap: (btn, i, currentRow) => {
-      return (currentRow.length === 2 && i < twitters.length) || i === twitters.length
-    }
-  }).extra({ parse_mode: 'HTML' })
-  )
-}
 
 module.exports = groupsMenu
