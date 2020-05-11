@@ -4,14 +4,14 @@ const handleSendMessage = require('../handlers/handleSendMessage')
 class Queue {
   constructor() {
     this.collection = {}
-    this._i = 0
+    // this._i = 0
     this.renderer()
   }
 
   renderer = () => {
     setInterval(() => {
-      this._i += 1
-      console.log(this._i, Object.keys(this.collection))
+      // this._i += 1
+      // console.log(this._i, Object.keys(this.collection))
       this.sender()
     }, SENDER_INTERVAL)
   }
