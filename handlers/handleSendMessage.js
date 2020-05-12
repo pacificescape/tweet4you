@@ -16,8 +16,6 @@ const handleSendMessage = ({ twitter, post, groups = [], settings }) => {
       return 'trash'
     }
 
-    // await sleep(i * 1500)
-
     let sendedMessage
     const replyToId = message.reply_ids[group]
     // console.log(encodeURIComponent(group))
@@ -86,7 +84,7 @@ class Message {
       this.trash = this.isTrash()
       if (!this.trash) {
         this.text = settings.onlyMedia ? '' : await this.getText()
-        this.media = this.getMedia()
+        this.media = settings.onlyText ? '' : this.getMedia()
         this.method = this.getMethod()
       }
       return this
@@ -272,12 +270,12 @@ class Message {
     }
 
     if (this.media.length > 1) {
-      method = 'sendMediaGroup' // (chatId, media, [extra])
+      method = 'sendMediaGroup'
     } else {
       this.media = this.media[0] ? this.media[0].media : ''
       switch (this.type) {
         case 'photo':
-          method = 'sendPhoto'// (chatId, photo, [extra])
+          method = 'sendPhoto'
           break
         case 'animated_gif':
         case 'video':

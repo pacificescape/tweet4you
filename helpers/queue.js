@@ -1,4 +1,4 @@
-const SENDER_INTERVAL = 3000
+const SENDER_INTERVAL = 3500
 const handleSendMessage = require('../handlers/handleSendMessage')
 
 class Queue {

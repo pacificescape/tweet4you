@@ -46,8 +46,3 @@ const groupSchema = mongoose.Schema({
 })
 
 module.exports = groupSchema
-
-// create: {
-//   type: Boolean,
-//   default: false
-// }
