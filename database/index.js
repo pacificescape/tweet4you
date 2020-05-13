@@ -158,6 +158,7 @@ db.Twitter.activate = async (ctx, twitter, group) => {
   }
   await group.save().catch((err) => console.log(err))
 
+  ctx.session.user.tree = ctx.session.user.tree || {}
   ctx.session.user.tree[twitter.id] = []
   ctx.session.user.tree[twitter.id].push(group.username)
   ctx.session.user = await ctx.session.user.save().catch((err) => console.log(err))

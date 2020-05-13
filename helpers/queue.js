@@ -1,6 +1,10 @@
 const SENDER_INTERVAL = 3500
 const handleSendMessage = require('../handlers/handleSendMessage')
 
+function createQueue () {
+  return new Queue()
+}
+
 class Queue {
   constructor() {
     this.collection = {}
@@ -52,4 +56,4 @@ class Queue {
   }
 }
 
-module.exports = Queue
+module.exports = createQueue

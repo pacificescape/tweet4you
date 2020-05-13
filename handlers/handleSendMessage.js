@@ -73,7 +73,7 @@ const handleSendMessage = ({ twitter, post, groups = [], settings }) => {
 }
 
 class Message {
-  constructor (tweet, settings, groups, twitter) {
+  constructor(tweet, settings, groups, twitter) {
     return (async () => {
       this.tweet = tweet
       this.preview = true
@@ -91,7 +91,7 @@ class Message {
     })()
   }
 
-  isTrash () {
+  isTrash() {
     if (!this.settings.replies && this.tweet.is_quote_status) {
       return true
     }
@@ -101,7 +101,7 @@ class Message {
     return false
   }
 
-  deleteLinks (text) {
+  deleteLinks(text) {
     const links = []
     const retweet = this.tweet.retweeted_status
     const quote = this.tweet.quoted_status
@@ -131,15 +131,15 @@ class Message {
     return text.trim()
   }
 
-  linkToUser (x) {
+  linkToUser(x) {
     return `https://twitter.com/${x}`
   }
 
-  linkToCurrentPost () {
+  linkToCurrentPost() {
     return `https://twitter.com/${this.tweet.user.screen_name}/status/${this.tweet.id_str}`
   }
 
-  async getText () {
+  async getText() {
     if (this.settings.onlyMedia) {
       return ''
     }
@@ -208,7 +208,7 @@ class Message {
     return text
   }
 
-  getMedia () {
+  getMedia() {
     let extendedEntities
     if (!this.settings.onlyMedia) {
       extendedEntities = this.tweet.quoted_status ? this.tweet.quoted_status.extended_entities : this.tweet.extended_entities
@@ -221,27 +221,11 @@ class Message {
 
     if (extendedEntities) {
       medias = extendedEntities.media.map((media) => {
-        const type = media.type
-        switch (type) {
-          case 'video':
-          case 'animated_gif':
-            media.video_info.variants.find((v) => {
-              if (v.content_type === 'video/mp4') {
-                media = v.url
-              }
-            })
-            break
-          case 'photo':
-            media = media.media_url_https
-            break
-          default:
-            console.log('extended default return')
-            return extendedEntities.media[0]
-        }
         return {
-          type,
-          media
+          type: media.type,
+          media: getMediaByType(media) || extendedEntities.media[0]
         }
+
       }).filter(e => e)
 
       if (medias[0]) {
@@ -261,7 +245,7 @@ class Message {
     return medias
   }
 
-  getMethod () {
+  getMethod() {
     let method = 'sendMessage'
 
     if (this.settings.onlyText) {
@@ -285,6 +269,29 @@ class Message {
     }
     return method
   }
+}
+
+function getMediaByType(media) {
+  function getVideo(media) {
+    let variant = media.video_info.variants.find((v) => v.content_type === 'video/mp4')
+
+    return variant.url || ''
+  }
+
+  function getPhoto(media) {
+    return media.media_url_https
+  }
+
+  let mediaTypes = {
+    video: getVideo,
+    animated_gif: getVideo,
+    photo: getPhoto,
+    default: () => {}
+  }
+
+  let MediaExtractor = mediaTypes[media.type] || mediaTypes.default
+
+  return MediaExtractor(media)
 }
 
 module.exports = handleSendMessage

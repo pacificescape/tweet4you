@@ -5,9 +5,9 @@ const { listStatuses } = require('../API')
 const handleSendMessage = require('./handleSendMessage')
 const getListQuery = require('./getListQuery')
 const frequency = process.env.FREQUENCY || '*/60 * * * * *'
-const Queue = require('../helpers/queue')
+const createQueue = require('../helpers/queue')
 
-const queue = new Queue()
+const queue = createQueue()
 
 const lists = new LRU({ maxAge: 1000 * 60 * 5 })
 /**
@@ -66,7 +66,8 @@ class ListPolling {
       posts = posts.reverse()
 
       twitters.map((twitter) => {
-        const lastStatus = twitter.last_status
+        const lastStatus = twitter.last_status || {}
+        lastStatus.created_at = lastStatus.created_at || 0
 
         for (const post of posts) {
           if (post.user.id_str === twitter.id) {
