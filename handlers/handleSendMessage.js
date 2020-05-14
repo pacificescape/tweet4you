@@ -2,7 +2,7 @@ const { statusesShow } = require('../API')
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
-const handleSendMessage = ({ twitter, post, groups = [], settings }) => {
+const handleSendMessage = ({ twitter, post, groups = [], settings }, n) => {
   const { bot } = require('../bot')
   const tweet = post
   console.time(`${twitter.screen_name} ${post.id_str} (${groups.length})`)
@@ -11,6 +11,8 @@ const handleSendMessage = ({ twitter, post, groups = [], settings }) => {
     const setting = settings[group][tweet.user.id_str] || {}
 
     let message = await new Message(tweet, setting, groups, twitter)
+
+    sleep(n)
 
     if (message.trash) {
       return 'trash'
@@ -67,7 +69,7 @@ const handleSendMessage = ({ twitter, post, groups = [], settings }) => {
 
   Promise.all(sendPromises).then(async (array) => {
     console.log(array)
-    console.timeLog(`${twitter.screen_name} ${post.id_str} (${groups.length})`)
+    console.timeEnd(`${twitter.screen_name} ${post.id_str} (${groups.length})`)
     await twitter.save()
   })
 }
@@ -78,8 +80,8 @@ class Message {
       this.tweet = tweet
       this.preview = true
       this.reply_ids = {}
-      this.groups = groups // !!!
-      this.twitter = twitter // !!!
+      this.groups = groups
+      this.twitter = twitter
       this.settings = settings
       this.trash = this.isTrash()
       if (!this.trash) {

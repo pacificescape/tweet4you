@@ -4,7 +4,6 @@ const Markup = require('telegraf/markup')
 const groupTwitters = new Scene('groupTwitters')
 const { finWord, paginator } = require('../helpers')
 const pageLength = 10
-let buttons
 
 groupTwitters.enter((ctx) => {
     ctx.session.pages = Math.ceil(ctx.session.user.groups.length / pageLength)
@@ -31,7 +30,6 @@ groupTwitters.action(/^activate=(.+)/, async (ctx) => {
 groupTwitters.action(/deactivate=(.+)/, async (ctx) => {
     const twitter = ctx.session.user.twitters[ctx.match[1]]
     const group = ctx.session.user.groups.find((gr) => gr.username === ctx.session.group)
-
     const error = await ctx.state.db.Twitter.deactivate(twitter, group)
 
     if (error) {
@@ -52,41 +50,30 @@ groupTwitters.action(/deactivate=(.+)/, async (ctx) => {
     showTwitters(ctx)
 })
 
-groupTwitters.action(/>|<|\|/, (ctx) => {
-    switch (ctx.match[0]) {
-        case '<':
-            if (ctx.session.page > 0) {
-                ctx.session.page -= 1
-            }
-            break
-        case '>':
-            if (ctx.session.page < ctx.session.pages) {
-                ctx.session.page += 1
-            }
-            break
-        default:
-            return
-    }
+// < | >
+
+const navigation = {
+    '<': (ctx) => { if (ctx.session.page > 0) ctx.session.page -= 1 },
+    '>': (ctx) => { if (ctx.session.page < ctx.session.pages) ctx.session.page += 1 },
+    '|': (ctx) => ctx.answerCbQuery()
+}
+
+groupTwitters.action(/<|>/, (ctx) => {
+    navigation[ctx.match[0]](ctx)
 
     showTwitters(ctx)
+})
+
+groupTwitters.action('|', (ctx) => {
+    navigation[ctx.match[0]](ctx)
 })
 
 
 async function showTwitters(ctx) {
     ctx.session.pages = Math.ceil(ctx.session.user.twitters.length / pageLength)
 
-    // const { page, pages } = ctx.session
-
-    // buttons = [
-    //     Markup.callbackButton(ctx.i18n.t('back'), 'group'),
-    //     page !== 0 ? Markup.callbackButton('<', 'tw-') : Markup.callbackButton('|', '|'),
-    //     page !== pages - 1 ? Markup.callbackButton('>', 'tw+') : Markup.callbackButton('|', '|')
-    // ].filter(e => e)
-
     const { buttons, page } = paginator(ctx, ctx.i18n.t('back'), 'back')
-
     const group = ctx.session.user.groups.find((gr) => gr.username === ctx.session.group)
-
     const getGroup = (v, u) => v.groups.reduce((a, c) => c.username === u ? true : a, false)
 
     await ctx.session.user.twitters.forEach(v => v.populate('groups'))

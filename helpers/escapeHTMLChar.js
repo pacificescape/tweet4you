@@ -1,4 +1,4 @@
-module.exports = (w) => {
+module.exports = (w = '') => {
   return w.split('').map((c) => {
     switch (c) {
       case '&': return '&amp;'
@@ -8,9 +8,4 @@ module.exports = (w) => {
       default : return c
     }
   }).join('')
-
-  // if (lastName) {
-  //   return (firstName + ` ${lastName}`).trim()
-  // }
-  // return firstName
 }

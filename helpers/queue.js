@@ -14,15 +14,15 @@ class Queue {
 
   renderer = () => {
     setInterval(() => {
-      // this._i += 1
-      // console.log(this._i, Object.keys(this.collection))
       this.sender()
     }, SENDER_INTERVAL)
   }
 
   sender () {
+    let n = 0
     for (let key in this.collection) {
-      handleSendMessage(this.collection[key][0])
+      n += 500
+      handleSendMessage(this.collection[key][0], n)
       this.dequeue(key)
     }
   }
