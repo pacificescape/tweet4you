@@ -77,11 +77,11 @@ bot.command('fs', owner, () => list.job.start())
 bot.command('f', owner, () => list.job.stop())
 
 bot.command('start', privateChat((ctx) => ctx.scene.enter('mainMenu')))
-bot.command('tweet', sendInvite) // ??????
+bot.command('tweet', isAdmin, sendInvite) // ??????
 bot.on('message', privateChat((ctx) => {
   ctx.reply('/help')
 }))
-bot.action(/addPrivateGroup/, addPrivateGroup)
+bot.action(/addPrivateGroup/, isAdmin, addPrivateGroup)
 bot.action(/.+/, Composer.privateChat((ctx) => ctx.scene.enter('mainMenu')))
 bot.use(scenes.middleware())
 
