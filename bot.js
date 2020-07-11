@@ -77,7 +77,7 @@ bot.command('fs', owner, () => list.job.start())
 bot.command('f', owner, () => list.job.stop())
 
 bot.command('start', privateChat((ctx) => ctx.scene.enter('mainMenu')))
-bot.hears('!tweet', isAdmin, sendInvite) // ??????
+bot.command('tweet', isAdmin, sendInvite) // ??????
 bot.on('message', privateChat((ctx) => {
   ctx.reply('/help')
 }))
