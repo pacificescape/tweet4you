@@ -81,7 +81,7 @@ bot.command('tweet', isAdmin, sendInvite) // ??????
 bot.on('message', privateChat((ctx) => {
   ctx.reply('/help')
 }))
-bot.action(/addPrivateGroup/, addPrivateGroup)
+bot.action(/addPrivateGroup/, isAdmin, addPrivateGroup)
 bot.action(/.+/, Composer.privateChat((ctx) => ctx.scene.enter('mainMenu')))
 bot.use(scenes.middleware())
 

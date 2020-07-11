@@ -4,9 +4,7 @@ const groupSchema = mongoose.Schema({
   group_id: String,
   title: String,
   username: {
-    type: String,
-    // index: true,
-    unique: true
+    type: String
   },
   invite_link: String,
   speed: Number,
