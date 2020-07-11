@@ -1,13 +1,12 @@
 const mongoose = require('mongoose')
 
 const groupSchema = mongoose.Schema({
-  group_id: Number,
+  group_id: String,
   title: String,
   username: {
     type: String,
     // index: true,
-    unique: true,
-    required: true
+    unique: true
   },
   invite_link: String,
   speed: Number,

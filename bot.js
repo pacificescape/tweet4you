@@ -1,6 +1,6 @@
 const Telegraf = require('telegraf')
+const Composer = require('telegraf/composer')
 const session = require('telegraf/session')
-const RedisSession = require('telegraf-session-redis')
 const path = require('path')
 const I18n = require('telegraf-i18n')
 const rateLimit = require('telegraf-ratelimit')
@@ -9,7 +9,7 @@ const { privateChat } = require('telegraf/composer')
 const { db } = require('./database')
 const { owner } = require('./middlewares')
 const menu = require('./scenes')
-const { ListPolling, sendInvite } = require('./handlers')
+const { ListPolling, sendInvite, addPrivateGroup } = require('./handlers')
 const { isAdmin } = require('./helpers')
 
 global.startDate = new Date()
@@ -46,7 +46,7 @@ bot.use(i18n)
 
 // others
 
-bot.use(async (ctx, next) => {
+bot.use(Composer.privateChat(async (ctx, next) => {
   const ms = new Date()
 
   if (ctx.from) {
@@ -61,7 +61,7 @@ bot.use(async (ctx, next) => {
     if (ctx.callbackQuery) ctx.answerCbQuery(...ctx.state.answerCbQuery).catch((err) => console.log(err))
     console.log('Response time %sms', new Date() - ms)
   })
-})
+}))
 
 bot.use(async (ctx, next) => {
   ctx.state.db = db
@@ -69,19 +69,20 @@ bot.use(async (ctx, next) => {
   await next()
 })
 
-bot.use(menu)
+bot.use(Composer.privateChat(menu))
 
 const list = new ListPolling(db) // вынести в отдельный файл
 
 bot.command('fs', owner, () => list.job.start())
 bot.command('f', owner, () => list.job.stop())
 
-bot.command('start', (ctx) => ctx.scene.enter('mainMenu'))
+bot.command('start', privateChat((ctx) => ctx.scene.enter('mainMenu')))
 bot.hears('!tweet', isAdmin, sendInvite) // ??????
 bot.on('message', privateChat((ctx) => {
   ctx.reply('/help')
 }))
-bot.action(/.+/, (ctx) => ctx.scene.enter('mainMenu'))
+bot.action(/addPrivateGroup/, addPrivateGroup)
+bot.action(/.+/, Composer.privateChat((ctx) => ctx.scene.enter('mainMenu')))
 bot.use(scenes.middleware())
 
 db.connection.once('open', async () => {

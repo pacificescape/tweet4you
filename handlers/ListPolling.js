@@ -76,7 +76,7 @@ class ListPolling {
               newPosts.push({
                 twitter,
                 post,
-                groups: twitter.groups.map(g => g.username), // number string???
+                groups: twitter.groups.map(g => g.group_id ? g.group_id : g.username), // number string???
                 settings: twitter.groups.reduce((a, g) => { return { ...a, [g.group_id ? g.group_id : g.username]: g.settings } }, {})
               })
             }
@@ -85,7 +85,7 @@ class ListPolling {
       })
 
       if (newPosts.length > 0) {
-        const last = newPosts.length - 1
+        // const last = newPosts.length - 1
         newPosts.forEach((newPost, i) => {
           queue.enqueue(newPost)
           // setTimeout(() => handleSendMessage(newPost, i === last ? this.updateList.bind(this) : null), i * 2000)

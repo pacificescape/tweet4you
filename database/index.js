@@ -124,7 +124,12 @@ db.Twitter.deactivate = async (twitter, group) => {
 }
 
 db.Twitter.settings = async (twitterId, groupId, option) => {
-  const group = await db.Group.findOne({ username: groupId })
+  let group
+  if (groupId.includes('@')) {
+    group = await db.Group.findOne({ username: groupId })
+  } else {
+    group = await db.Group.findOne({ group_id: groupId })
+  }
 
   group.set({
     settings: {
@@ -160,7 +165,7 @@ db.Twitter.activate = async (ctx, twitter, group) => {
 
   ctx.session.user.tree = ctx.session.user.tree || {}
   ctx.session.user.tree[twitter.id] = []
-  ctx.session.user.tree[twitter.id].push(group.username)
+  ctx.session.user.tree[twitter.id].push((group.username ? group.username : group.group_id))
   ctx.session.user = await ctx.session.user.save().catch((err) => console.log(err))
 
   if (!twitter.list) {
@@ -172,7 +177,7 @@ db.Twitter.activate = async (ctx, twitter, group) => {
   }
 
   twitter.groups.addToSet(group)
-  twitter.posts[group.username] = twitter.posts[group.username] || {}
+  twitter.posts[(group.username ? group.username : group.group_id)] = twitter.posts[(group.username ? group.username : group.group_id)] || {}
 
   await twitter.save().catch((err) => console.log(err))
 }
@@ -194,8 +199,12 @@ db.Group.check = async (username) => {
   if (!username) {
     throw new Error('Wrong username')
   }
+  let query = { group_id: username }
+  if (username.includes('@')) {
+    query = { username: username }
+  }
 
-  const group = await db.Group.findOne({ username })
+  const group = await db.Group.findOne(query)
     .populate('users')
     .populate('twitters')
     .catch((error) => console.log(error))
@@ -216,7 +225,7 @@ db.Group.update = async (ctx) => {
 }
 
 db.Group.add = async (ctx) => {
-  const info = await ctx.telegram.getChatAdministrators(`@${ctx.match[1]}`).catch(err => err) // перехват выше ?
+  const info = await ctx.telegram.getChatAdministrators(`@${ctx.match[1]}`).catch(err => err)
 
   if (info.code) {
     throw new Error('Бот не имеет доступа к группе/каналу')
@@ -251,6 +260,33 @@ db.Group.add = async (ctx) => {
   }
 
   ctx.session.user = await ctx.session.user.save()
+
+  return group
+}
+
+db.Group.addPrivate = async (ctx) => {
+  const [userId, groupId] = ctx.match.input.match(/(\d+)/g)
+
+  let group = await db.Group.check(groupId)
+
+  if (!group) {
+    group = new db.Group()
+    group.group_id = groupId
+    // group.users.addToSet(ctx.session.user)
+
+    await group.save().catch((err) => console.log(err))
+  }
+
+  const newbie = group.users.reduce((a, v) => v.id !== userId, true)
+
+  if (newbie) {
+    const user = await ctx.state.db.User.findOne({ telegram_id: userId })
+    group.users.addToSet(user)
+    user.groups.addToSet(group)
+
+    await group.save().catch((err) => console.log(err))
+    await user.save()
+  }
 
   return group
 }

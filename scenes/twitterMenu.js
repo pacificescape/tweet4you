@@ -92,8 +92,8 @@ twitterMenu.action(/Delete=(.+)/, async (ctx) => {
 // < >
 
 const navigation = {
-  '<': (ctx) => { if(ctx.session.page > 0) ctx.session.page -= 1 },
-  '>': (ctx) => { if(ctx.session.page < ctx.session.pages) ctx.session.page += 1 },
+  '<': (ctx) => { if (ctx.session.page > 0) ctx.session.page -= 1 },
+  '>': (ctx) => { if (ctx.session.page < ctx.session.pages) ctx.session.page += 1 },
 }
 
 twitterMenu.action(/>|</, (ctx) => {
@@ -120,7 +120,7 @@ twitterMenu.hears(/twitter.com/, (ctx) => {
     .then((t) => {
       ctx.reply(`${t.name} Успешно добавлен.`,
         Markup.inlineKeyboard(editTwitterButtons(t.id).concat([
-          Markup.callbackButton(ctx.i18n.t('back'), 'reenter'),
+          Markup.callbackButton(ctx.i18n.t('back'), 'reenter')
         ]), {
           wrap: (btn, index, currentRow) => (currentRow.length === 2 && index < pageLength) // || index === editTwitterButtons().length
         }).extra({ parse_mode: 'HTML', reply_to_message_id: ctx.message.message_id, disable_web_page_preview: true }))

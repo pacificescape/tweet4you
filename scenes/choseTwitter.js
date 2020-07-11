@@ -12,7 +12,8 @@ function choseTwitterPage (ctx) {
   const { buttons, page } = paginator(ctx, ctx.i18n.t('back'), 'twitterMenu')
 
   groups = groups.slice(page * pageLength, (page + 1) * pageLength).map((I) => {
-    return Markup.callbackButton(ctx.session.user.groups[I].username, `choseGroup=${I}`)
+    const name = ctx.session.user.groups[I].username ? ctx.session.user.groups[I].username : ctx.session.user.groups[I].group_id
+    return Markup.callbackButton(name, `choseGroup=${I}`)
   })
 
   ctx.editMessageText(ctx.i18n.t('twitter.choseGroup', { // новый текст
@@ -38,7 +39,7 @@ choseTwitter.enter((ctx) => {
   const groups = []
 
   twitter.groups.forEach((g) => {
-    const i = ctx.session.user.groups.findIndex((grUser) => grUser.username === g.username)
+    const i = ctx.session.user.groups.findIndex((grUser) => (grUser.username ? grUser.username : grUser.group_id) === (g.username ? g.username : g.group_id))
     if (i !== -1) {
       groups.push(i)
     }
@@ -77,7 +78,7 @@ choseTwitter.action('twitterMenu', (ctx) => ctx.scene.enter('twitterMenu'))
 
 choseTwitter.action(/choseGroup=(.+)/, async (ctx) => {
   ctx.session.currentGroupIndex = ctx.match[1]
-  ctx.session.currentGroup = ctx.session.user.groups[ctx.match[1]].username
+  ctx.session.currentGroup = ctx.session.user.groups[ctx.match[1]].username ? ctx.session.user.groups[ctx.match[1]].username : ctx.session.user.groups[ctx.match[1]].group_id
   ctx.scene.enter('manageTwitter')
 })
 

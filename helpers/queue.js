@@ -6,13 +6,13 @@ function createQueue () {
 }
 
 class Queue {
-  constructor() {
+  constructor () {
     this.collection = {}
     // this._i = 0
     this.renderer()
   }
 
-  renderer = () => {
+  renderer () {
     setInterval(() => {
       this.sender()
     }, SENDER_INTERVAL)
@@ -20,7 +20,7 @@ class Queue {
 
   sender () {
     let n = 0
-    for (let key in this.collection) {
+    for (const key in this.collection) {
       n += 500
       handleSendMessage(this.collection[key][0], n)
       this.dequeue(key)
@@ -29,7 +29,7 @@ class Queue {
 
   enqueue (tweet) {
     tweet.groups.forEach((group) => {
-      let message = {
+      const message = {
         groups: [group],
         twitter: tweet.twitter,
         post: tweet.post,

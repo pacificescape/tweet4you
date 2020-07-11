@@ -12,7 +12,7 @@ function mainGroupsPage (ctx, addition) {
   const { buttons, page } = paginator(ctx, ctx.i18n.t('back'), 'back')
 
   const groups = ctx.session.user.groups.slice(page * pageLength, (page + 1) * pageLength).map((v) => {
-    return Markup.callbackButton(v.username, `group=${v.username}`)
+    return Markup.callbackButton(v.username ? v.username : v.group_id, `group=${v.username ? v.username : v.group_id}`)
   })
 
   ctx.editMessageText(addition + ctx.i18n.t('groupsMenu', {
