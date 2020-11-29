@@ -278,9 +278,8 @@ class Message {
 
 function getMediaByType (media) {
   function getVideo (media) {
-    const variant = media.video_info.variants.find((v) => v.content_type === 'video/mp4')
-
-    return variant.url || ''
+    const variants = media.video_info.variants.filter(v => v.bitrate).sort((a,b) => b.bitrate - a.bitrate)
+    return variants[0].url || ''
   }
 
   function getPhoto (media) {
