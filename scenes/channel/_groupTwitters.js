@@ -2,7 +2,7 @@ const Scene = require('telegraf/scenes/base')
 const Markup = require('telegraf/markup')
 // const isAdmin = require('../helpers/isAdmin')
 const groupTwitters = new Scene('groupTwitters')
-const { paginator } = require('../helpers')
+const { paginator } = require('../../helpers')
 const pageLength = 10
 
 groupTwitters.enter((ctx) => {

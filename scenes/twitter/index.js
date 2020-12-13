@@ -131,7 +131,6 @@ async function renderSettings (ctx) {
 
   const buttons = []
   const editTwitterButtons = (id = '') => {
-
     if (!settings.onlyMedia) {
       buttons.push(
         Markup.callbackButton(`${ctx.i18n.t('twitter.link')} ${settings.link ? '✅' : '❌'}`, `setting=link=${id}`),
@@ -205,13 +204,8 @@ stage.use((ctx, next) => {
 })
 
 const composer = new Composer()
-composer.use(async (ctx, next) => {
-  console.log(ctx.callbackQuery)
-  await next()
-})
 composer.use(stage)
 composer.hears(match('menu.twitters'), ctx => ctx.scene.enter('twitter.main'))
-composer.hears(match('menu.channels'), ctx => ctx.scene.enter('twitter.channels'))
 composer.action('twitter:main', ctx => ctx.scene.enter('twitter.main'))
 composer.action(/twitter:twitter:(.+)/, (ctx) => ctx.scene.enter('twitter.channels'))
 composer.action(/twitter:channel:(.+)/, (ctx) => ctx.scene.enter('twitter.channel'))

@@ -7,10 +7,13 @@ const rateLimit = require('telegraf-ratelimit')
 const { db } = require('./database')
 const {
   twitterHandler,
+  channelHandler,
   startHandler
 } = require('./scenes')
-const { ListPolling, addPrivateGroup } = require('./handlers')
-const { isAdmin } = require('./helpers')
+const {
+  ListPolling
+  // addPrivateGroup
+} = require('./handlers')
 
 global.startDate = new Date()
 
@@ -58,6 +61,7 @@ bot.use(async (ctx, next) => {
 })
 
 bot.use(twitterHandler)
+bot.use(channelHandler)
 bot.use(startHandler)
 
 db.connection.once('open', async () => {

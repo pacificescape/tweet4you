@@ -49,7 +49,7 @@ twitterMenu.action(/setting=(.+)=(.+)/, (ctx) => {
   ctx.state.db.Twitter.settings(ctx.match[2], ctx.session.currentGroup, ctx.match[1])
     .then(() => {
       ctx.session.settings[ctx.match[1]] = !ctx.session.settings[ctx.match[1]]
-      manageTwitter(ctx)
+      // manageTwitter(ctx)
     })
     .catch((err) => console.log(err))
 })

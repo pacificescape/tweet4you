@@ -28,9 +28,8 @@ async function renderSettings (ctx) {
 
   const twitter = await ctx.state.db.Twitter.findOne({ id: ctx.session.twitter })
 
+  const buttons = []
   const editTwitterButtons = (id = '') => {
-    const buttons = []
-
     if (!settings.onlyMedia) {
       buttons.push(
         Markup.callbackButton(`${ctx.i18n.t('twitter.link')} ${settings.link ? '✅' : '❌'}`, `setting=link=${id}`),
