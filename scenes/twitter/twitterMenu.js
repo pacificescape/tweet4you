@@ -2,14 +2,13 @@ const Scene = require('telegraf/scenes/base')
 // const WizardScene = require('telegraf/scenes/wizard')
 // const { Composer } = require('@telegraf/core')
 const Markup = require('telegraf/markup')
-const { finWord, paginator } = require('../helpers')
+const { finWord, paginator } = require('../../helpers')
 // const Extra = require('telegraf/extra')
 
 // const composer = new Composer()
 
 const twitterMenu = new Scene('twitterMenu')
 const pageLength = 10
-let buttons
 let editTwitterButtons
 
 function mainTwitterPage (ctx) {
@@ -93,7 +92,7 @@ twitterMenu.action(/Delete=(.+)/, async (ctx) => {
 
 const navigation = {
   '<': (ctx) => { if (ctx.session.page > 0) ctx.session.page -= 1 },
-  '>': (ctx) => { if (ctx.session.page < ctx.session.pages) ctx.session.page += 1 },
+  '>': (ctx) => { if (ctx.session.page < ctx.session.pages) ctx.session.page += 1 }
 }
 
 twitterMenu.action(/>|</, (ctx) => {

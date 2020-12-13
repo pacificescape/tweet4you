@@ -4,7 +4,6 @@ const Markup = require('telegraf/markup')
 const groupsMenu = new Scene('groupsMenu')
 const { finWord, paginator } = require('../helpers')
 const pageLength = 10
-let buttons
 
 function mainGroupsPage (ctx, addition) {
   ctx.session.pages = Math.ceil(ctx.session.user.groups.length / pageLength)

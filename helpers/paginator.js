@@ -1,11 +1,11 @@
 const Markup = require('telegraf/markup')
 
-module.exports = function paginator (ctx, yaml, cbq) {
+module.exports = function paginator (ctx, back) {
   const { page, pages } = ctx.session
 
-  const buttons = pages === 1 ? [Markup.callbackButton(yaml, cbq)]
+  const buttons = pages <= 1 ? back ? [Markup.callbackButton(ctx.i18n.t('nav.back'), back)] : []
     : [
-      Markup.callbackButton(yaml, cbq),
+      back ? Markup.callbackButton(ctx.i18n.t('nav.back'), back) : null,
       page !== 0 ? Markup.callbackButton('<', '<') : Markup.callbackButton('|', '|'),
       page !== pages - 1 ? Markup.callbackButton('>', '>') : Markup.callbackButton('|', '|')
     ].filter(e => e)
