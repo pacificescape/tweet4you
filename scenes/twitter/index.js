@@ -13,22 +13,47 @@ let twitter
 async function showTwitters (ctx) {
   const { buttons, page } = paginator(ctx)
 
-  const twitters = ctx.session.user.twitters.slice(page * pageLength, (page + 1) * pageLength).map((v) => {
+  console.time('count')
+  const twittersCount = await ctx.state.db.Twitter
+    .countDocuments({ users: { $in: ctx.session.user } })
+  console.timeEnd('count')
+
+  // const twittersUnique = await ctx.state.db.Twitter
+  //   .find({ users: { $in: ctx.session.user } })
+  // console.log(twittersUnique)
+
+  // ctx.session.user.twitters = twittersUnique.map(v => v._id)
+  // await ctx.session.user.save()
+  console.time('twitters')
+  let twitters = await ctx.state.db.Twitter
+    .find({ users: { $in: ctx.session.user } })
+    // .sort({ createdAt: -1 })
+    .skip(page * pageLength)
+    .limit(pageLength)
+  console.timeEnd('twitters')
+
+  twitters = twitters.map((v) => {
     return Markup.callbackButton(v.screen_name, `twitter:twitter:${v.id}`)
   })
 
   ctx[method(ctx)](ctx.i18n.t('twitterMenu', {
-    twitters: `<b>${ctx.session.user.twitters.length}</b>`,
-    fin: finWord(ctx.session.user.twitters.length)
+    twitters: twittersCount,
+    fin: finWord(twittersCount)
   }),
   Markup.inlineKeyboard(twitters.concat(buttons), {
-    wrap: (btn, i, currentRow) => (currentRow.length === 2 && i < twitters.length) || i === twitters.length
-  }).extra({ parse_mode: 'HTML', disable_web_page_preview: true })
+    wrap: (_, i, currentRow) => (currentRow.length === 2 && i < twitters.length) || i === twitters.length
+  }).extra({
+    parse_mode: 'HTML',
+    disable_web_page_preview: true
+  })
   ).catch((error) => console.log(ctx.from.id, error))
 }
 
 twitterMain.enter(async (ctx) => {
-  ctx.session.pages = Math.ceil(ctx.session.user.twitters.length / pageLength)
+  const twittersCount = await ctx.state.db.Twitter
+    .countDocuments({ users: { $in: ctx.session.user } })
+
+  ctx.session.pages = Math.ceil(twittersCount / pageLength)
   ctx.session.page = 0
 
   await showTwitters(ctx)
@@ -45,7 +70,7 @@ twitterMain.action(/twitter:(.+):(.+):settings/, async (ctx) => {
   ctx.session.settings[ctx.match[1]] = !ctx.session.settings[ctx.match[1]]
   // await manageTwitter(ctx)
 })
-twitterMain.action(/>|<|\|/, async (ctx) => {
+twitterMain.action(/>|</, async (ctx) => {
   await switchPage(ctx)
   await showTwitters(ctx)
 })

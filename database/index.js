@@ -89,11 +89,11 @@ db.Twitter.upToDate = async (ctx) => {
     twitter.last_status = fetchedTw.status
     twitter.users.addToSet(ctx.session.user)
 
-    twitter = await twitter.save().catch((error) => console.log(ctx.session.user.username, error))
+    twitter = await twitter.save().catch((err) => console.log(err))
 
-    ctx.session.user.twitters.addToSet(twitter) // addToSet
+    ctx.session.user.twitters.addToSet(twitter)
 
-    await ctx.session.user.save().catch((error) => console.log(ctx.session.user.username, error))
+    ctx.session.user = await ctx.session.user.save().catch((err) => console.log(err))
 
     return twitter
   }
@@ -145,22 +145,13 @@ db.Twitter.settings = async (twitterId, groupId, option) => {
 }
 
 db.Twitter.activate = async (ctx, twitter, group) => {
-  group.twitters = group.twitters.concat(twitter)
-  group.settings = {
-    ...group.settings,
-    [twitter.id]: {
-      link: true,
-      name: true,
-      retweets: true,
-      from: true,
-      replies: true,
-      images: true,
-      videos: true,
-      onlyText: false,
-      onlyMedia: false,
-      clearMedia: false
-    }
-  }
+  group.twitters = group.twitters.addToSet(twitter)
+
+  const settings = new db.Settings()
+  settings.group = group
+  settings.twitter = twitter
+  await settings.save().catch((err) => console.log(err))
+
   await group.save().catch((err) => console.log(err))
 
   ctx.session.user.tree = ctx.session.user.tree || {}
@@ -356,69 +347,20 @@ module.exports = {
   db
 }
 
-// const updateSettings = async () => {
-//   const groups = await db.Group.find().populate('twitters')
+// eslint-disable-next-line no-unused-vars
+const createSettings = async () => {
+  db.Group.find().cursor()
+    .eachAsync(async (group) => {
+      console.log(group.username || group.group_id)
+      for (const [key, v] of Object.entries(group.settings)) {
+        const twitter = await db.Twitter.findOne({ id: key })
+        const settings = new db.Settings()
 
-//   groups.forEach((group) => {
-//     for (const twitter of group.twitters) {
-//       group.set({
-//         ['settings.' + [twitter.id]]: {
-//           clearMedia: false,
-//           name: true,
-//           from: true,
-//           link: true,
-//           retweets: true,
-//           replies: true,
-//           images: true,
-//           videos: true,
-//           onlyText: false,
-//           onlyMedia: false
-//         }
-//       }
-//       )
-//     }
+        settings.group = group
+        settings.twitter = twitter
+        Object.assign(settings, v)
 
-//     await group.save().then((data) => {
-//       console.log(data)
-//     })
-//   })
-// }
-
-// updateSettings()
-
-// const updateSettings = async () => {
-//   const users = await db.User.find()
-//     .populate('groups')
-//     .populate('twitters')
-
-// users.forEach((user) => {
-//   user.tree = {}
-//   const prom = user.twitters.map(async (twitter) => {
-//     user.tree[twitter.id] = []
-//     const tw = await db.Twitter.findOne({ id: twitter.id }).populate('groups')
-//     for (const g of tw.groups) {
-//       if (user.groups.find((gr) => gr.username === g.username)) {
-//         user.tree[twitter.id].push(g.username)
-//       }
-//     }
-//     return ''
-//   })
-//   Promise.all(prom).then(async (a) => await user.save())
-// })
-// }
-
-// const updateSettings = async () => {
-//   const { listsList } = require('../API')
-//   const list = new db.List()
-//   const newList = await listsList()
-
-//   list.list_id = newList.id_str
-//   list.full_name = newList.full_name
-//   list.name = newList.name
-//   list.member_count = newList.member_count
-//   list.created = newList.created_at
-
-//   return await list.save()
-// }
-
-// updateSettings()
+        await settings.save()
+      }
+    })
+}

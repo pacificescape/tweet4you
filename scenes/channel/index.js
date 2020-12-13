@@ -160,10 +160,10 @@ stage.use((ctx, next) => {
 })
 
 const composer = new Composer()
-composer.use(async (ctx, next) => {
-  console.log(ctx.callbackQuery)
-  await next()
-})
+// composer.use(async (ctx, next) => {
+//   console.log(ctx.callbackQuery)
+//   await next()
+// })
 composer.use(stage)
 composer.hears(match('menu.channels'), ctx => ctx.scene.enter('channel.main'))
 composer.action('channel.main', (ctx) => ctx.scene.enter('channel.main'))
