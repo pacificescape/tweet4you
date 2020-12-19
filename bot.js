@@ -74,8 +74,7 @@ db.connection.once('open', async () => {
   } else {
     bot.launch().then(() => {
       console.log('bot start polling')
-      const list = new ListPolling(db) // вынести в отдельный файл
-      // list.job.start()
+      new ListPolling(db)
     }).catch((error) => console.log(error))
   }
 })
