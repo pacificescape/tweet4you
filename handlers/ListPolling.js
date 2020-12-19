@@ -15,7 +15,7 @@ const lists = new LRU({ maxAge: 1000 * 60 * 5 })
 class ListPolling {
   constructor (db) {
     this.db = db
-    this.job = this.cronPolling() // new CronJob(frequency, this.cronPolling, null, false, 'America/Los_Angeles', this)
+    this.job = new CronJob(frequency, this.cronPolling, null, false, 'America/Los_Angeles', this)
     this.counter = 0
   }
 
@@ -32,7 +32,7 @@ class ListPolling {
   }
 
   async updateList () {
-    return // this.db.List.setSinceId(this.list, this.new_since_id)
+    return this.db.List.setSinceId(this.list, this.new_since_id)
   }
 
   async cronPolling () {

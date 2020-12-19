@@ -6,7 +6,6 @@ const I18n = require('telegraf-i18n')
 const rateLimit = require('telegraf-ratelimit')
 const { db } = require('./database')
 const {
-  privateHandlers,
   twitterHandler,
   channelHandler,
   startHandler,
@@ -74,7 +73,8 @@ db.connection.once('open', async () => {
   } else {
     bot.launch().then(() => {
       console.log('bot start polling')
-      new ListPolling(db)
+      const list = new ListPolling(db)
+      list.job.start()
     }).catch((error) => console.log(error))
   }
 })
