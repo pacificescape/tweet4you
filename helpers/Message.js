@@ -2,89 +2,88 @@ const { statusesShow } = require('../API')
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
-const handleSendMessage = ({ twitter, post, groups = [], settings }, n) => {
-  const { bot } = require('../bot')
-  const tweet = post
-  console.time(`${twitter.screen_name} ${post.id_str} (${groups.length})`)
+// const handleSendMessage = ({ twitter, post, settings }, n) => {
+//   const { bot } = require('../bot')
+//   const tweet = post
+//   console.time(`${twitter.screen_name} ${post.id_str} (${twitter.groups.length})`)
 
-  const sendPromises = groups.map(async (group, i) => {
-    const setting = settings[group][tweet.user.id_str] || {}
+//   const sendPromises = twitter.groups.map(async (group) => {
+//     const setting = settings.find(s => s.group.toString() === group._id.toString()) || {}
+//     const group_id = group.group_id ? group.group_id : group.username
 
-    let message = await new Message(tweet, setting, groups, twitter)
+//     let message = await new Message(tweet, setting, groups, twitter)
 
-    sleep(n)
+//     await sleep(n)
 
-    if (message.trash) {
-      return 'trash'
-    }
+//     if (message.trash) return 'trash'
 
-    let sendedMessage
-    const replyToId = message.reply_ids[group]
-    // console.log(encodeURIComponent(group))
-    // console.log(message.reply_ids[group])
+//     let sendedMessage
+//     const replyToId = message.reply_ids[group]
+//     // console.log(encodeURIComponent(group))
+//     // console.log(message.reply_ids[group])
 
-    if (!group.includes('@')) {
-      group = -group
-    }
+//     if (!group.includes('@')) {
+//       group = -group
+//     }
 
-    try {
-      if (message.method === 'sendMessage') {
-        if (!message.text) return
+//     try {
+//       if (message.method === 'sendMessage') {
+//         if (!message.text) return
 
-        sendedMessage = await bot.telegram[message.method](group, message.text, {
-          parse_mode: 'HTML',
-          disable_web_page_preview: message.preview,
-          reply_to_message_id: replyToId
-        })
-      } else {
-        sendedMessage = await bot.telegram[message.method](group, message.media, {
-          caption: message.text,
-          parse_mode: 'HTML',
-          disable_web_page_preview: message.preview,
-          reply_to_message_id: replyToId // ???????
-        })
-      }
-      if (!Array.isArray(sendedMessage)) {
-        sendedMessage = [sendedMessage]
-      }
-      sendedMessage.forEach((msg) => {
-        twitter.set({
-          posts: {
-            ...twitter.posts,
-            [group]: {
-              ...twitter.posts[group],
-              [tweet.id_str]: msg.message_id
-            }
-          }
-        })
-        twitter.groups.forEach((g, i) => {
-          if (g.username === group) {
-            twitter.groups[i].group_id = msg.chat.id
-            twitter.groups[i].title = msg.chat.title
-          }
-        })
-      })
-    } catch (error) {
-      return console.log(error)
-    }
-    message = null
-    return 'done'
-  })
+//         sendedMessage = await bot.telegram[message.method](group, message.text, {
+//           parse_mode: 'HTML',
+//           disable_web_page_preview: message.preview,
+//           reply_to_message_id: replyToId
+//         })
+//       } else {
+//         sendedMessage = await bot.telegram[message.method](group, message.media, {
+//           caption: message.text,
+//           parse_mode: 'HTML',
+//           disable_web_page_preview: message.preview,
+//           reply_to_message_id: replyToId // ???????
+//         })
+//       }
+//       if (!Array.isArray(sendedMessage)) {
+//         sendedMessage = [sendedMessage]
+//       }
+//       sendedMessage.forEach((msg) => {
+//         twitter.set({
+//           posts: {
+//             ...twitter.posts,
+//             [group]: {
+//               ...twitter.posts[group],
+//               [tweet.id_str]: msg.message_id
+//             }
+//           }
+//         })
+//         twitter.groups.forEach((g, i) => {
+//           if (g.username === group) {
+//             twitter.groups[i].group_id = msg.chat.id
+//             twitter.groups[i].title = msg.chat.title
+//           }
+//         })
+//       })
+//     } catch (error) {
+//       return console.log(error)
+//     }
+//     message = null
+//     return 'done'
+//   })
 
-  Promise.all(sendPromises).then(async (array) => {
-    console.log(array)
-    console.timeEnd(`${twitter.screen_name} ${post.id_str} (${groups.length})`)
-    await twitter.save()
-  })
-}
+//   Promise.all(sendPromises).then(async (array) => {
+//     console.log(array)
+//     console.timeEnd(`${twitter.screen_name} ${post.id_str} (${twitter.groups.length})`)
+//     await twitter.save()
+//   })
+// }
 
 class Message {
-  constructor (tweet, settings, groups, twitter) {
+  constructor (tweet, settings, twitter) {
     return (async () => {
       this.tweet = tweet
       this.preview = true
       this.reply_ids = {}
-      this.groups = groups
+      this.groups = twitter.groups.map(g => g.group_id ? g.group_id : g.username)
       this.twitter = twitter
       this.settings = settings
       this.trash = this.isTrash()
@@ -155,7 +154,7 @@ class Message {
         this.reply = await statusesShow(this.tweet.in_reply_to_status_id_str)
           .catch((error) => { console.log(error) })
       } else if (this.tweet.in_reply_to_user_id_str === this.tweet.user.id_str) {
-        this.reply_ids = this.groups.reduce((a, gr) => {
+        this.reply_ids = this.groups.reduce((a, gr) => { // task: uint8 array for ids
           if (this.twitter.posts[gr]) {
             if (this.twitter.posts[gr][this.tweet.in_reply_to_status_id_str]) {
               return {
@@ -298,4 +297,4 @@ function getMediaByType (media) {
   return MediaExtractor(media)
 }
 
-module.exports = handleSendMessage
+module.exports = Message

@@ -59,8 +59,9 @@ db.Twitter.check = async (ctx) => {
   const link = parseLink(ctx.message.text)
 
   if (!link) {
-    throw new Error('Wrong link')
+    throw new Error(ctx.i18n.t('error.wrongLink'))
   }
+
   const user = await usersShow(link)
 
   const twitter = await db.Twitter.findOne({ id: user.id_str })
@@ -69,7 +70,7 @@ db.Twitter.check = async (ctx) => {
     .catch((error) => console.log(error))
 
   if (!twitter) {
-    user.error = true
+    user.isNew = true
     return user
   }
 
@@ -79,7 +80,7 @@ db.Twitter.check = async (ctx) => {
 db.Twitter.upToDate = async (ctx) => {
   const fetchedTw = await db.Twitter.check(ctx)
 
-  if (fetchedTw.error) {
+  if (fetchedTw.isNew) {
     let twitter = new db.Twitter()
 
     twitter.counter = 0
@@ -98,10 +99,9 @@ db.Twitter.upToDate = async (ctx) => {
     return twitter
   }
 
-  const oldTw = ctx.session.user.twitters.reduce((a, v) => v.id === fetchedTw.id, false)
+  const exists = ctx.session.user.twitters.find((v) => v.id === fetchedTw.id)
 
-  const addTwitter = !oldTw ? ctx.session.user.twitters.addToSet(fetchedTw) : null
-  console.log('add twitter: ', addTwitter)
+  if (!exists) ctx.session.user.twitters.addToSet(fetchedTw)
 
   const userSave = await ctx.session.user.save().catch((error) => console.log(ctx.session.user.username, error))
   return userSave ? fetchedTw : new Error('Didn\'t added. Error')

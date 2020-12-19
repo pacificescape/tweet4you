@@ -59,7 +59,7 @@ async function renderSettings (ctx) {
   }
 
   if (!settings) {
-    ctx.editMessageText(ctx.i18n.t('error'),
+    ctx.editMessageText(ctx.i18n.t('error.message'),
       Markup.inlineKeyboard(buttons).extra({ parse_mode: 'HTML' })
     )
     return

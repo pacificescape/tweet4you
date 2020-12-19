@@ -1,5 +1,7 @@
+const userMiddleware = require('./userMiddleware')
 const owner = require('./owner')
 
 module.exports = {
-    owner
+  userMiddleware,
+  owner
 }

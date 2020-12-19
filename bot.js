@@ -6,14 +6,18 @@ const I18n = require('telegraf-i18n')
 const rateLimit = require('telegraf-ratelimit')
 const { db } = require('./database')
 const {
+  privateHandlers,
   twitterHandler,
   channelHandler,
-  startHandler
-} = require('./scenes')
+  startHandler,
+  unknownHandler
+} = require('./composers')
 const {
-  ListPolling
+  ListPolling,
+  errorHandler
   // addPrivateGroup
 } = require('./handlers')
+const { userMiddleware } = require('./middlewares')
 
 global.startDate = new Date()
 
@@ -27,6 +31,9 @@ const limitConfig = {
   window: 1000,
   limit: 5
 }
+
+bot.on(['channel_post', 'edited_channel_post',], () => { })
+
 const i18n = new I18n({
   directory: path.resolve(__dirname, 'locales'),
   defaultLanguage: 'ru'
@@ -35,34 +42,22 @@ const i18n = new I18n({
 bot.telegram.getMe()
   .then(me => { global.botId = me.id })
   .catch(error => console.log(error))
+
 bot.use(session({ ttl: 1200 }))
 bot.use(rateLimit(limitConfig))
 bot.use(i18n)
-bot.use(Composer.privateChat(async (ctx, next) => {
-  const ms = new Date()
-
-  if (ctx.from) {
-    if (!ctx.session.user) {
-      ctx.session.user = await db.User.update(ctx)
-      console.log('new session: ', new Date().toLocaleTimeString())
-    }
-  }
-  // if (ctx.session.user && ctx.session.user.locale) console.log(ctx.session.user.locale)
-  if (ctx.callbackQuery) ctx.state.answerCbQuery = []
-  return next(ctx).then(() => {
-    if (ctx.callbackQuery) ctx.answerCbQuery(...ctx.state.answerCbQuery).catch((err) => console.log(err))
-    console.log('Response time %sms', new Date() - ms)
-  })
-}))
+bot.catch(errorHandler)
 bot.use(async (ctx, next) => {
   ctx.state.db = db
-
+  console.log(ctx.updateType)
+  console.log(ctx.callbackQuery)
   await next()
 })
-
-bot.use(twitterHandler)
-bot.use(channelHandler)
-bot.use(startHandler)
+bot.use(Composer.privateChat(userMiddleware))
+bot.use(Composer.privateChat(twitterHandler))
+bot.use(Composer.privateChat(channelHandler))
+bot.use(Composer.privateChat(startHandler))
+bot.use(Composer.privateChat(unknownHandler))
 
 db.connection.once('open', async () => {
   console.log('Connected to MongoDB')
@@ -79,7 +74,7 @@ db.connection.once('open', async () => {
   } else {
     bot.launch().then(() => {
       console.log('bot start polling')
-      // const list = new ListPolling(db) // вынести в отдельный файл
+      const list = new ListPolling(db) // вынести в отдельный файл
       // list.job.start()
     }).catch((error) => console.log(error))
   }

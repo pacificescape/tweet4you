@@ -6,8 +6,8 @@ module.exports = function paginator (ctx, back) {
   const buttons = pages <= 1 ? back ? [Markup.callbackButton(ctx.i18n.t('nav.back'), back)] : []
     : [
       back ? Markup.callbackButton(ctx.i18n.t('nav.back'), back) : null,
-      page !== 0 ? Markup.callbackButton('<', '<') : Markup.callbackButton('|', '|'),
-      page !== pages - 1 ? Markup.callbackButton('>', '>') : Markup.callbackButton('|', '|')
+      page !== 0 ? Markup.callbackButton('<', '<') : null,
+      page !== pages - 1 ? Markup.callbackButton('>', '>') : null
     ].filter(e => e)
 
   return { buttons, page, pages }

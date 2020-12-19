@@ -13,10 +13,7 @@ let twitter
 async function showTwitters (ctx) {
   const { buttons, page } = paginator(ctx)
 
-  console.time('count')
-  const twittersCount = await ctx.state.db.Twitter
-    .countDocuments({ users: { $in: ctx.session.user } })
-  console.timeEnd('count')
+  const twittersCount = ctx.session.user?.twitters?.length
 
   // const twittersUnique = await ctx.state.db.Twitter
   //   .find({ users: { $in: ctx.session.user } })
@@ -24,17 +21,18 @@ async function showTwitters (ctx) {
 
   // ctx.session.user.twitters = twittersUnique.map(v => v._id)
   // await ctx.session.user.save()
-  console.time('twitters')
-  let twitters = await ctx.state.db.Twitter
-    .find({ users: { $in: ctx.session.user } })
-    // .sort({ createdAt: -1 })
-    .skip(page * pageLength)
-    .limit(pageLength)
-  console.timeEnd('twitters')
+  // console.time('twitters')
 
-  twitters = twitters.map((v) => {
-    return Markup.callbackButton(v.screen_name, `twitter:twitter:${v.id}`)
-  })
+  // let twitters = await ctx.state.db.Twitter
+  //   .find({ users: { $in: ctx.session.user._id } })
+  //   // .sort({ createdAt: -1 })
+  //   .skip(page * pageLength)
+  //   .limit(pageLength)
+  // console.timeEnd('twitters')
+
+  const twitters = ctx.session.user.twitters
+    .slice(page * pageLength, (page + 1) * pageLength)
+    .map((v) => Markup.callbackButton(v.screen_name, `twitter:twitter:${v.id}`))
 
   ctx[method(ctx)](ctx.i18n.t('twitterMenu', {
     twitters: twittersCount,
@@ -50,8 +48,7 @@ async function showTwitters (ctx) {
 }
 
 twitterMain.enter(async (ctx) => {
-  const twittersCount = await ctx.state.db.Twitter
-    .countDocuments({ users: { $in: ctx.session.user } })
+  const twittersCount = ctx.session.user.twitters.length
 
   ctx.session.pages = Math.ceil(twittersCount / pageLength)
   ctx.session.page = 0
@@ -75,20 +72,22 @@ twitterMain.action(/>|</, async (ctx) => {
   await showTwitters(ctx)
 })
 twitterMain.hears(/twitter.com/, async (ctx) => {
-  const editTwitterButtons = (id = '') => [
+  const addBtn = (id = '') => [
     Markup.callbackButton(`${ctx.i18n.t('twitter.addTo')}`, `AddTo=${id}`),
     Markup.callbackButton(`${ctx.i18n.t('twitter.delete')}`, `Delete=${id}`)
   ]
 
-  await ctx.state.db.Twitter.upToDate(ctx)
-    .then((t) => {
-      ctx.reply(`${t.name} Успешно добавлен.`,
-        Markup.inlineKeyboard(editTwitterButtons(t.id).concat([
-          Markup.callbackButton(ctx.i18n.t('back'), 'twitter:main')
-        ]), {
-          wrap: (_, index, currentRow) => (currentRow.length === 2 && index < pageLength) // || index === editTwitterButtons().length
-        }).extra({ parse_mode: 'HTML', reply_to_message_id: ctx.message.message_id, disable_web_page_preview: true }))
-    })
+  const addedTwitter = await ctx.state.db.Twitter.upToDate(ctx)
+
+  await ctx.reply(`${addedTwitter.name} Успешно добавлен.`,
+    Markup.inlineKeyboard(addBtn(addedTwitter.id).concat([
+      Markup.callbackButton(ctx.i18n.t('back'), 'twitter:main')
+    ]), {
+      parse_mode: 'HTML',
+      reply_to_message_id: ctx.message.message_id,
+      disable_web_page_preview: true,
+      wrap: (_, i, row) => (row.length === 2 && i < pageLength)
+    }))
     .catch((err) => {
       ctx.reply(`Ошибка: ${err}.`, { reply_to_message_id: ctx.message.message_id })
     })
@@ -104,8 +103,8 @@ async function showTwitterChannels (ctx) {
     return Markup.callbackButton(name, `twitter:channel:${I}`)
   })
 
-  await ctx[method(ctx)](ctx.i18n.t('twitter.choseGroup', { // новый текст
-    twitter: `<b>${twitter.screen_name}</b>`,
+  await ctx[method(ctx)](ctx.i18n.t('twitter.choseGroup', {
+    twitter: `<b>${ctx.session.scene.twitter.screen_name}</b>`,
     groups: `<b>${groups.length}</b>`,
     fin: (groups.length === 11 || groups.length % 10 !== 1) ? ctx.i18n.t('twitter.x2-9') : ctx.i18n.t('twitter.x1')
   }),
@@ -119,14 +118,17 @@ async function showTwitterChannels (ctx) {
     .catch((error) => console.log(ctx.from.id, error))
 }
 
-twitterChannels.enter((ctx) => {
-  ctx.session.twitter = ctx.match[1]
-  twitter = ctx.session.user.twitters.find((tw) => tw.id === ctx.session.twitter)
-  ctx.session.scene.twitter = twitter
-  const groups = []
-  if (!twitter) return // fix
+twitterChannels.enter(async (ctx) => {
+  ctx.session.scene.twitter = await ctx.state.db.Twitter
+    .findOne({ id: ctx.match[1], users: { $in: ctx.session.user } })
+    .populate('groups')
+    // const twitter = ctx.session.user.twitters.find((tw) => tw.id === ctx.session.twitter)
+    // ctx.session.scene.twitter = twitter
 
-  twitter.groups.forEach((g) => {
+  const groups = []
+  if (!ctx.session.scene.twitter) return // fix
+
+  ctx.session.scene.twitter.groups.forEach((g) => {
     const i = ctx.session.user.groups.findIndex((grUser) => (grUser.username ? grUser.username : grUser.group_id) === (g.username ? g.username : g.group_id))
     if (i !== -1) {
       groups.push(i)
@@ -146,56 +148,61 @@ twitterChannels.action(/>|</, async (ctx) => {
 })
 twitterChannels.action('twitterMenu', (ctx) => ctx.scene.enter('twitter.main'))
 
-async function renderSettings (ctx) {
-  // const twitterId = ctx.session.scene.twitter
-  // const channelId = ctx.session.scene.channel
-  ctx.session.settings = ctx.session.user.groups[ctx.session.currentGroupIndex].settings[ctx.session.twitter]
-  const settings = ctx.session.settings
+async function showSettings (ctx) {
+  if (!ctx.session.scene.twitter || !ctx.session.scene.channel) return
 
-  const twitter = await ctx.state.db.Twitter.findOne({ id: ctx.session.twitter })
+  const settings = await ctx.state.db.Settings
+    .findOne({ group: ctx.session.scene.channel, twitter: ctx.session.scene.twitter })
+
+  const twitter = await ctx.state.db.Twitter
+    .findOne({ id: ctx.session.scene.twitter.id })
+
+  if (!settings) {
+    ctx.editMessageText(ctx.i18n.t('error.message', {
+      admin: process.env.OWNER_ID
+    }),
+      Markup.inlineKeyboard(buttons).extra({ parse_mode: 'HTML' })
+    )
+    return
+  }
+
+  ctx.session.scene.settings = settings
 
   const buttons = []
   const editTwitterButtons = (id = '') => {
     if (!settings.onlyMedia) {
       buttons.push(
-        Markup.callbackButton(`${ctx.i18n.t('twitter.link')} ${settings.link ? '✅' : '❌'}`, `setting=link=${id}`),
-        Markup.callbackButton(`${ctx.i18n.t('twitter.name')} ${settings.name ? '✅' : '❌'}`, `setting=name=${id}`)
+        Markup.callbackButton(`${ctx.i18n.t('twitter.link')} ${settings.link ? '✅' : '❌'}`, `twitter:settings:link:${id}`),
+        Markup.callbackButton(`${ctx.i18n.t('twitter.name')} ${settings.name ? '✅' : '❌'}`, `twitter:settings:name:${id}`)
       )
     }
 
     if (!settings.onlyText) {
       buttons.push(
-        Markup.callbackButton(`${ctx.i18n.t('twitter.images')} ${settings.images ? '✅' : '❌'}`, `setting=images=${id}`),
-        Markup.callbackButton(`${ctx.i18n.t('twitter.videos')} ${settings.videos ? '✅' : '❌'}`, `setting=videos=${id}`)
+        Markup.callbackButton(`${ctx.i18n.t('twitter.images')} ${settings.images ? '✅' : '❌'}`, `twitter:settings:images:${id}`),
+        Markup.callbackButton(`${ctx.i18n.t('twitter.videos')} ${settings.videos ? '✅' : '❌'}`, `twitter:settings:videos:${id}`)
       )
     }
 
     buttons.push(
-      Markup.callbackButton(`${ctx.i18n.t('twitter.retweets')} ${settings.retweets ? '✅' : '❌'}`, `setting=retweets=${id}`),
-      Markup.callbackButton(`${ctx.i18n.t('twitter.replies')} ${settings.replies ? '✅' : '❌'}`, `setting=replies=${id}`),
-      Markup.callbackButton(`${ctx.i18n.t('twitter.from')} ${settings.from ? '✅' : '❌'}`, `setting=from=${id}`),
-      Markup.callbackButton(`${ctx.i18n.t('twitter.onlyText')} ${settings.onlyText ? '✅' : '❌'}`, `setting=onlyText=${id}`),
-      Markup.callbackButton(`${ctx.i18n.t('twitter.onlyMedia')} ${settings.onlyMedia ? '✅' : '❌'}`, `setting=onlyMedia=${id}`),
-      Markup.callbackButton(`${ctx.i18n.t('twitter.clearMedia')} ${settings.clearMedia ? '✅' : '❌'}`, `setting=clearMedia=${id}`),
-      Markup.callbackButton(`${ctx.i18n.t('twitter.addTo')}`, `AddTo=${id}`),
-      Markup.callbackButton(`${ctx.i18n.t('twitter.delete')}`, `Delete=${id}`)
+      Markup.callbackButton(`${ctx.i18n.t('twitter.retweets')} ${settings.retweets ? '✅' : '❌'}`, `twitter:settings:retweets:${id}`),
+      Markup.callbackButton(`${ctx.i18n.t('twitter.replies')} ${settings.replies ? '✅' : '❌'}`, `twitter:settings:replies:${id}`),
+      Markup.callbackButton(`${ctx.i18n.t('twitter.from')} ${settings.from ? '✅' : '❌'}`, `twitter:settings:from:${id}`),
+      Markup.callbackButton(`${ctx.i18n.t('twitter.onlyText')} ${settings.onlyText ? '✅' : '❌'}`, `twitter:settings:onlyText:${id}`),
+      Markup.callbackButton(`${ctx.i18n.t('twitter.onlyMedia')} ${settings.onlyMedia ? '✅' : '❌'}`, `twitter:settings:onlyMedia:${id}`),
+      Markup.callbackButton(`${ctx.i18n.t('twitter.clearMedia')} ${settings.clearMedia ? '✅' : '❌'}`, `twitter:settings:clearMedia:${id}`),
+      Markup.callbackButton(`${ctx.i18n.t('twitter.addTo')}`, `AddTo:${id}`),
+      Markup.callbackButton(`${ctx.i18n.t('twitter.delete')}`, `Delete:${id}`)
     )
 
     return buttons
-  }
-
-  if (!settings) {
-    ctx.editMessageText(ctx.i18n.t('error'),
-      Markup.inlineKeyboard(buttons).extra({ parse_mode: 'HTML' })
-    )
-    return
   }
 
   ctx.editMessageText(ctx.i18n.t('twitter.edit', {
     group_name: ctx.session.user.groups[ctx.session.currentGroupIndex].username || ctx.session.user.groups[ctx.session.currentGroupIndex].group_id,
     screen_name: twitter.screen_name
   }),
-  Markup.inlineKeyboard(editTwitterButtons(twitter.id).concat([
+  Markup.inlineKeyboard(editTwitterButtons(settings._id).concat([
     Markup.callbackButton(ctx.i18n.t('back'), `twitter:twitter:${ctx.session.scene.twitter.id}`)
   ]), {
     wrap: (_, index, currentRow) => currentRow.length === 2 || index === editTwitterButtons().length
@@ -208,18 +215,36 @@ twitterChannelSettings.enter((ctx) => {
   ctx.session.currentGroupIndex = ctx.match[1]
   ctx.session.currentGroup = ctx.session.user.groups[ctx.match[1]].username ? ctx.session.user.groups[ctx.match[1]].username : ctx.session.user.groups[ctx.match[1]].group_id
 
-  renderSettings(ctx)
+  showSettings(ctx)
 })
 twitterChannelSettings.action('back', (ctx) => {
   ctx.scene.enter('choseTwitter')
 })
-twitterChannelSettings.action(/setting=(.+)=(.+)/, (ctx) => {
-  ctx.state.db.Twitter.settings(ctx.match[2], ctx.session.currentGroup, ctx.match[1])
-    .then(() => {
-      ctx.session.settings[ctx.match[1]] = !ctx.session.settings[ctx.match[1]]
-      renderSettings(ctx)
-    })
-    .catch((err) => console.log(err))
+twitterChannelSettings.action(/twitter:settings:(.+):(.+)/, async (ctx) => {
+  const settings = ctx.session.scene.settings
+  const type = ctx.match[1]
+  const _id = ctx.match[2]
+
+  if (settings._id.toString() !== _id) {
+    console.log('settings error') // task: delete this block
+  }
+
+  if (typeof settings[type] === 'boolean') {
+    settings[type] = !settings[type]
+  } else {
+    console.log(type)
+  }
+
+  const updatedSetings = await settings.save()
+
+  ctx.session.scene.settings = updatedSetings
+  await showSettings(ctx)
+  // ctx.state.db.Twitter.settings(ctx.match[2], ctx.session.currentGroup, ctx.match[1])
+  //   .then(() => {
+  //     ctx.session.settings[ctx.match[1]] = !ctx.session.settings[ctx.match[1]]
+  //     showSettings(ctx)
+  //   })
+  //   .catch((err) => console.log(err))
 })
 
 const stage = new Stage([twitterMain, twitterChannels, twitterChannelSettings])
@@ -234,5 +259,6 @@ composer.hears(match('menu.twitters'), ctx => ctx.scene.enter('twitter.main'))
 composer.action('twitter:main', ctx => ctx.scene.enter('twitter.main'))
 composer.action(/twitter:twitter:(.+)/, (ctx) => ctx.scene.enter('twitter.channels'))
 composer.action(/twitter:channel:(.+)/, (ctx) => ctx.scene.enter('twitter.channel'))
+composer.action(/twitter/, ctx => ctx.scene.enter('twitter.main'))
 
 module.exports = composer
