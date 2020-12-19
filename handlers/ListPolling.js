@@ -51,6 +51,8 @@ class ListPolling {
     try {
       const queues = {}
       let posts = await listStatuses(this.list_id, this.list.since_id)
+      console.log('Count posts:', posts?.length)
+      if (posts?.length === 0) return
       const twitters = await this.getTwitters(posts)
       this.new_since_id = posts.length > 0 ? posts[0].id_str : this.list.since_id
 

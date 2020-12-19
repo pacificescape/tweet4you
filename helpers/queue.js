@@ -3,7 +3,7 @@ const Message = require('./Message')
 
 const createQueue = (channel) => {
   console.log(channel)
-  const channelUsername = channel.group_id || channel.username
+  let channelUsername = channel.group_id || channel.username
 
   const queue = new Queue(channelUsername, {
     limiter: {
@@ -18,7 +18,10 @@ const createQueue = (channel) => {
     const { twitter: tw, post } = job.data
 
     try {
-      const twitter = await db.Twitter.findOne({ _id: tw._id })
+      const twitter = await db.Twitter
+        .findOne({ _id: tw._id })
+        .populate('groups')
+        .populate('users')
 
       let settings = await db.Settings
         .findOne({ twitter, group: channel })
