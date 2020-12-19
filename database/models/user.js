@@ -12,7 +12,9 @@ const userSchema = mongoose.Schema({
   last_name: String,
   twitters: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Twitter'
+    ref: 'Twitter',
+    unique: true,
+    index: true
   }],
   create: {
     type: Boolean,

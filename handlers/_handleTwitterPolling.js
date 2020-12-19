@@ -5,7 +5,6 @@ const { user_timeline: userTimeline } = require('../API')
  *
  * handleTwitterPolling - class for checking twitter account
  *
- *
 */
 
 function handleTwitterPolling (bot, db, twitterName) {
@@ -61,9 +60,7 @@ handleTwitterPolling.prototype.cronPolling = async function () {
 }
 
 handleTwitterPolling.prototype.save = async (twitter) => {
-  await twitter.save() // вызов без аргументов
+  await twitter.save()
 }
 
 module.exports = handleTwitterPolling
-
-// сделать класс чтобы поллить разные списки

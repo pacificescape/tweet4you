@@ -15,7 +15,10 @@ const twitterSchema = mongoose.Schema({
   list: String,
   users: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'User',
+    index: true,
+    unique: true,
+    sparse: true
   }],
   groups: [{
     type: mongoose.Schema.Types.ObjectId,

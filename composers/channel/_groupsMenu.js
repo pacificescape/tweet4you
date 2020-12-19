@@ -2,9 +2,8 @@ const Scene = require('telegraf/scenes/base')
 const Markup = require('telegraf/markup')
 // const isAdmin = require('../helpers/isAdmin')
 const groupsMenu = new Scene('groupsMenu')
-const { finWord, paginator } = require('../helpers')
+const { finWord, paginator } = require('../../helpers')
 const pageLength = 10
-let buttons
 
 function mainGroupsPage (ctx, addition) {
   ctx.session.pages = Math.ceil(ctx.session.user.groups.length / pageLength)
@@ -31,7 +30,6 @@ groupsMenu.enter((ctx) => {
 
   mainGroupsPage(ctx)
 })
-
 groupsMenu.hears(/t.me\/(.+)|@(.+)/, async (ctx) => {
   ctx.match = ctx.match.filter(e => e)
   let addition = ''

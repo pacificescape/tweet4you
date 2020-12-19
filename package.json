@@ -8,7 +8,8 @@
     "npm": ">=6.0.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "eslint .",
+    "test": "npm run lint"
   },
   "repository": {
     "type": "git",
@@ -26,11 +27,12 @@
   },
   "homepage": "https://github.com/pacificescape/tweet4you#readme",
   "dependencies": {
+    "bull": "^3.20.0",
     "cron": "^1.8.2",
     "dotenv": "^8.2.0",
     "got": "^10.5.5",
     "lru-cache": "^5.1.1",
-    "mongoose": "^5.9.1",
+    "mongoose": "^5.11.7",
     "oauth-1.0a": "^2.2.6",
     "telegraf": "^3.36.0",
     "telegraf-i18n": "^6.6.0",
@@ -38,11 +40,12 @@
     "telegraf-session-redis": "^5.1.0"
   },
   "devDependencies": {
-    "eslint": "^6.8.0",
+    "eslint": "^6.7.1",
     "eslint-config-standard": "^14.1.0",
     "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-node": "^10.0.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.0.1"
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "supervisor": "^0.12.0"
   }
 }
