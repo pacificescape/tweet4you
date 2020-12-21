@@ -9,8 +9,9 @@ module.exports = async (ctx, next) => {
   }
   // if (ctx.session.user && ctx.session.user.locale) console.log(ctx.session.user.locale)
   if (ctx.callbackQuery) ctx.state.answerCbQuery = []
-  return next(ctx).then(() => {
-    if (ctx.callbackQuery) ctx.answerCbQuery(...ctx.state.answerCbQuery).catch((err) => console.log(err))
-    console.log('Response time %sms', new Date() - ms)
-  })
+  return await next(ctx)
+    .then(() => {
+      if (ctx.callbackQuery) ctx.answerCbQuery(...ctx.state.answerCbQuery).catch((err) => console.log(err))
+      console.log('Response time %sms', new Date() - ms)
+    })
 }

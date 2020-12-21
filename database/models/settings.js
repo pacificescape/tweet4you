@@ -3,12 +3,12 @@ const mongoose = require('mongoose')
 const settingsSchema = mongoose.Schema({
   group: {
     type: mongoose.Schema.Types.ObjectId,
-    reg: 'Group',
+    ref: 'Group',
     index: true
   },
   twitter: {
     type: mongoose.Schema.Types.ObjectId,
-    reg: 'Twitter',
+    ref: 'Twitter',
     index: true
   },
   link: {
@@ -56,7 +56,11 @@ const settingsSchema = mongoose.Schema({
   }],
   allowMatch: [{
     type: String
-  }]
+  }],
+  enabled: {
+    type: Boolean,
+    default: true
+  }
 }, {
   timestamps: true
 })

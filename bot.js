@@ -31,26 +31,28 @@ const limitConfig = {
   limit: 5
 }
 
-bot.on(['channel_post', 'edited_channel_post',], () => { })
+bot.on(['channel_post', 'edited_channel_post'], () => { })
 
 const i18n = new I18n({
   directory: path.resolve(__dirname, 'locales'),
   defaultLanguage: 'ru'
 })
 
-bot.telegram.getMe()
-  .then(me => { global.botId = me.id })
-  .catch(error => console.log(error))
+;(async () => {
+  const me = await bot.telegram.getMe()
+  global.botId = me.id
+  console.log(me)
+})()
 
+bot.catch(errorHandler)
 bot.use(session({ ttl: 1200 }))
 bot.use(rateLimit(limitConfig))
 bot.use(i18n)
-bot.catch(errorHandler)
 bot.use(async (ctx, next) => {
   ctx.state.db = db
   console.log(ctx.updateType)
   console.log(ctx.callbackQuery)
-  await next()
+  await next(ctx)
 })
 bot.use(Composer.privateChat(userMiddleware))
 bot.use(Composer.privateChat(twitterHandler))
@@ -73,8 +75,8 @@ db.connection.once('open', async () => {
   } else {
     bot.launch().then(() => {
       console.log('bot start polling')
-      const list = new ListPolling(db)
-      list.job.start()
+      // const list = new ListPolling(db)
+      // list.job.start()
     }).catch((error) => console.log(error))
   }
 })

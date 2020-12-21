@@ -27,11 +27,11 @@ async function mainGroupsPage (ctx, addition) {
   ).catch((error) => console.log(ctx.from.id, error))
 }
 
-channelMain.enter((ctx) => {
+channelMain.enter(async (ctx) => {
   ctx.session.pages = Math.ceil(ctx.session.user.groups.length / pageLength)
   ctx.session.page = 0
 
-  mainGroupsPage(ctx)
+  await mainGroupsPage(ctx)
 })
 channelMain.hears(/t.me\/(.+)|@(.+)/, async (ctx) => {
   ctx.match = ctx.match.filter(e => e)
@@ -61,8 +61,8 @@ channelMain.hears(/t.me\/(.+)|@(.+)/, async (ctx) => {
   }).extra({ parse_mode: 'HTML' })
   ).catch((error) => console.log(ctx.from.id, error))
 })
-channelMain.action('group', (ctx) => {
-  mainGroupsPage(ctx)
+channelMain.action('group', async (ctx) => {
+  await mainGroupsPage(ctx)
 })
 channelMain.action('|', (ctx) => {
   ctx.answerCbQuery()
@@ -79,7 +79,7 @@ channelMain.action('delete', async (ctx) => {
       console.log(ctx.session.user.username, err)
     })
 
-  mainGroupsPage(ctx, addition)
+  await mainGroupsPage(ctx, addition)
 })
 channelMain.action(/>|</, async (ctx) => {
   await switchPage(ctx)
@@ -91,14 +91,27 @@ async function showTwitters (ctx) {
 
   const { buttons, page } = paginator(ctx, 'channel.main')
   const group = ctx.session.user.groups.find((gr) => (gr.username ? gr.username : gr.group_id) === ctx.session.group)
-  const getGroup = (v, u) => v.groups.reduce((a, c) => (c.username ? c.username : c.group_id) === u ? true : a, false)
 
   await ctx.session.user.twitters.forEach(v => v.populate('groups'))
 
-  const twitters = ctx.session.user.twitters.slice(page * pageLength, (page + 1) * pageLength).map((v, i) => {
-    const enabled = getGroup(v, group.username ? group.username : group.group_id)
-    return Markup.callbackButton(`${v.screen_name} ${enabled ? '✅' : '❌'}`, `${enabled ? `deactivate=${i + page * pageLength}` : `activate=${i + page * pageLength}`}`)
-  })
+  let twitters = ctx.session.user.twitters
+    .slice(page * pageLength, (page + 1) * pageLength)
+
+  const settings = await ctx.state.db.Settings
+    .find({
+      group,
+      twitter: { $in: twitters }
+    })
+    .populate('twitter')
+
+  twitters = twitters
+    .map(t => {
+      const s = settings.find(s => s.twitter.id === t.id)
+      return Markup.callbackButton(
+        `${t.screen_name} ${s?.enabled ? '✅' : '❌'}`,
+        `group:activation:${s._id}`
+      )
+    })
 
   ctx[method(ctx)](ctx.i18n.t('group.toggle_posting', {
     username: group.username ? group.username : group.group_id
@@ -111,20 +124,19 @@ async function showTwitters (ctx) {
   )
 }
 
-channelTwitters.enter((ctx) => {
+channelTwitters.enter(async (ctx) => {
   ctx.session.pages = Math.ceil(ctx.session.user.groups.length / pageLength)
   ctx.session.page = 0
 
-  showTwitters(ctx)
+  await showTwitters(ctx)
 })
-channelTwitters.action(/^activate=(.+)/, async (ctx) => {
-  const twitter = ctx.session.user.twitters[ctx.match[1]]
-  const group = ctx.session.user.groups.find((gr) => (gr.username ? gr.username : gr.group_id) === ctx.session.group)
+channelTwitters.action(/group:activation:(.+)/, async (ctx) => {
+  const settings = await ctx.state.db.Settings.findOne({ _id: ctx.match[1] })
+  if (!settings) return
+  settings.enabled = !settings.enabled
+  await settings.saveErr()
 
-  await ctx.state.db.Twitter.activate(ctx, twitter, group)
-
-  ctx.session.user = await ctx.state.db.User.update(ctx)
-  showTwitters(ctx)
+  await showTwitters(ctx)
 })
 channelTwitters.action(/deactivate=(.+)/, async (ctx) => {
   const twitter = ctx.session.user.twitters[ctx.match[1]]
@@ -146,8 +158,9 @@ channelTwitters.action(/deactivate=(.+)/, async (ctx) => {
 
   ctx.session.user = await ctx.state.db.User.update(ctx)
 
-  showTwitters(ctx)
+  await showTwitters(ctx)
 })
+
 channelTwitters.action(/<|>/, async (ctx) => {
   await switchPage(ctx)
   await showTwitters(ctx)
@@ -160,10 +173,6 @@ stage.use((ctx, next) => {
 })
 
 const composer = new Composer()
-// composer.use(async (ctx, next) => {
-//   console.log(ctx.callbackQuery)
-//   await next()
-// })
 composer.use(stage)
 composer.hears(match('menu.channels'), ctx => ctx.scene.enter('channel.main'))
 composer.action('channel.main', (ctx) => ctx.scene.enter('channel.main'))
@@ -174,4 +183,5 @@ composer.action(/group=(.+)/, (ctx) => {
   ctx.session.group = ctx.match[1]
   ctx.scene.enter('channel.twitter')
 })
+
 module.exports = composer

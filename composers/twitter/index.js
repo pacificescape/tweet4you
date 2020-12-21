@@ -8,7 +8,6 @@ const twitterChannels = new Scene('twitter.channels')
 const twitterChannelSettings = new Scene('twitter.channel')
 
 const pageLength = 10
-let twitter
 
 async function showTwitters (ctx) {
   const { buttons, page } = paginator(ctx)
@@ -140,7 +139,7 @@ twitterChannels.enter(async (ctx) => {
   ctx.session.pages = Math.ceil(groups.length / pageLength)
   ctx.session.page = 0
 
-  showTwitterChannels(ctx)
+  await showTwitterChannels(ctx)
 })
 twitterChannels.action(/>|</, async (ctx) => {
   await switchPage(ctx)
@@ -161,7 +160,7 @@ async function showSettings (ctx) {
     ctx.editMessageText(ctx.i18n.t('error.message', {
       admin: process.env.OWNER_ID
     }),
-      Markup.inlineKeyboard(buttons).extra({ parse_mode: 'HTML' })
+    Markup.inlineKeyboard(buttons).extra({ parse_mode: 'HTML' })
     )
     return
   }
@@ -200,7 +199,7 @@ async function showSettings (ctx) {
 
   ctx.editMessageText(ctx.i18n.t('twitter.edit', {
     group_name: ctx.session.user.groups[ctx.session.currentGroupIndex].username || ctx.session.user.groups[ctx.session.currentGroupIndex].group_id,
-    screen_name: twitter.screen_name
+    screen_name: twitterErr.screen_name
   }),
   Markup.inlineKeyboard(editTwitterButtons(settings._id).concat([
     Markup.callbackButton(ctx.i18n.t('back'), `twitter:twitter:${ctx.session.scene.twitter.id}`)
@@ -210,15 +209,15 @@ async function showSettings (ctx) {
   )
 }
 
-twitterChannelSettings.enter((ctx) => {
+twitterChannelSettings.enter(async (ctx) => {
   ctx.session.scene.channel = ctx.session.user.groups[ctx.match[1]]
   ctx.session.currentGroupIndex = ctx.match[1]
   ctx.session.currentGroup = ctx.session.user.groups[ctx.match[1]].username ? ctx.session.user.groups[ctx.match[1]].username : ctx.session.user.groups[ctx.match[1]].group_id
 
-  showSettings(ctx)
+  await showSettings(ctx)
 })
-twitterChannelSettings.action('back', (ctx) => {
-  ctx.scene.enter('choseTwitter')
+twitterChannelSettings.action('back', async (ctx) => {
+  await ctx.scene.enter('choseTwitter')
 })
 twitterChannelSettings.action(/twitter:settings:(.+):(.+)/, async (ctx) => {
   const settings = ctx.session.scene.settings
@@ -255,10 +254,10 @@ stage.use((ctx, next) => {
 
 const composer = new Composer()
 composer.use(stage)
-composer.hears(match('menu.twitters'), ctx => ctx.scene.enter('twitter.main'))
-composer.action('twitter:main', ctx => ctx.scene.enter('twitter.main'))
+composer.hears(match('menu.twitters'), (ctx) => ctx.scene.enter('twitter.main'))
+composer.action('twitter:main', (ctx) => ctx.scene.enter('twitter.main'))
 composer.action(/twitter:twitter:(.+)/, (ctx) => ctx.scene.enter('twitter.channels'))
 composer.action(/twitter:channel:(.+)/, (ctx) => ctx.scene.enter('twitter.channel'))
-composer.action(/twitter/, ctx => ctx.scene.enter('twitter.main'))
+composer.action(/twitter/, (ctx) => ctx.scene.enter('twitter.main'))
 
 module.exports = composer

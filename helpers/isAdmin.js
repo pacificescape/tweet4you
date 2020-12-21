@@ -3,6 +3,6 @@ module.exports = async (ctx, next) => {
   admins = admins.map((v) => v.user.id)
 
   if (admins && admins.includes(ctx.message.from.id)) {
-    return await next()
+    return next()
   }
 }
