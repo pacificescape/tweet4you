@@ -2,6 +2,7 @@ const { Composer, Stage, Markup } = require('telegraf')
 const Scene = require('telegraf/scenes/base')
 const { match } = require('telegraf-i18n')
 const { finWord, paginator, method, switchPage } = require('../../helpers')
+const { db } = require('../../database')
 
 const pageLength = 10
 
@@ -104,14 +105,33 @@ async function showTwitters (ctx) {
     })
     .populate('twitter')
 
-  twitters = twitters
-    .map(t => {
-      const s = settings.find(s => s.twitter.id === t.id)
+  twitters = await Promise.all(twitters
+    .map(async (t) => {
+      let s = settings.find(s => s?.twitter?.id === t.id)
+      if (!s) {
+        s = new db.Settings()
+        s.group = group
+        s.twitter = t
+        Object.assign(s, {
+          clearMedia: false,
+          from: true,
+          link: false,
+          retweets: true,
+          replies: true,
+          images: true,
+          videos: true,
+          onlyText: false,
+          onlyMedia: false,
+          name: false
+        })
+
+        await s.save()
+      }
       return Markup.callbackButton(
         `${t.screen_name} ${s?.enabled ? '✅' : '❌'}`,
-        `group:activation:${s._id}`
+        `group:activation:${s?._id}`
       )
-    })
+    }))
 
   ctx[method(ctx)](ctx.i18n.t('group.toggle_posting', {
     username: group.username ? group.username : group.group_id
@@ -131,10 +151,17 @@ channelTwitters.enter(async (ctx) => {
   await showTwitters(ctx)
 })
 channelTwitters.action(/group:activation:(.+)/, async (ctx) => {
-  const settings = await ctx.state.db.Settings.findOne({ _id: ctx.match[1] })
+  const settings = await ctx.state.db.Settings
+    .findOne({ _id: ctx.match[1] })
+    .populate('twitter')
+    .populate('group')
+
   if (!settings) return
   settings.enabled = !settings.enabled
-  await settings.saveErr()
+  if (settings.enabled) {
+    await ctx.state.db.Twitter.activate(ctx, settings.twitter, settings.group)
+  }
+  await settings.save()
 
   await showTwitters(ctx)
 })

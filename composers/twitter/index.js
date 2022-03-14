@@ -31,6 +31,7 @@ async function showTwitters (ctx) {
 
   const twitters = ctx.session.user.twitters
     .slice(page * pageLength, (page + 1) * pageLength)
+    .filter(Boolean)
     .map((v) => Markup.callbackButton(v.screen_name, `twitter:twitter:${v.id}`))
 
   ctx[method(ctx)](ctx.i18n.t('twitterMenu', {
@@ -97,9 +98,9 @@ async function showTwitterChannels (ctx) {
 
   const { buttons, page } = paginator(ctx, 'twitter:main')
 
-  groups = groups.slice(page * pageLength, (page + 1) * pageLength).map((I) => {
-    const name = ctx.session.user.groups[I].username ? ctx.session.user.groups[I].username : ctx.session.user.groups[I].group_id
-    return Markup.callbackButton(name, `twitter:channel:${I}`)
+  groups = groups.slice(page * pageLength, (page + 1) * pageLength).map((group) => {
+    const name = group.username || group.group_id
+    return Markup.callbackButton(name, `twitter:channel:${group.id}`)
   })
 
   await ctx[method(ctx)](ctx.i18n.t('twitter.choseGroup', {
@@ -124,19 +125,26 @@ twitterChannels.enter(async (ctx) => {
     // const twitter = ctx.session.user.twitters.find((tw) => tw.id === ctx.session.twitter)
     // ctx.session.scene.twitter = twitter
 
-  const groups = []
+  const settigns = await ctx.state.db.Settings.find({
+    twitter: ctx.session.scene.twitter,
+    group: { $in: ctx.session.user.groups }
+  })
+    .populate('group')
+    .populate('twitter')
+
+  // const groups = []
   if (!ctx.session.scene.twitter) return // fix
 
-  ctx.session.scene.twitter.groups.forEach((g) => {
-    const i = ctx.session.user.groups.findIndex((grUser) => (grUser.username ? grUser.username : grUser.group_id) === (g.username ? g.username : g.group_id))
-    if (i !== -1) {
-      groups.push(i)
-    }
-  })
-  groups.filter(e => e)
+  // ctx.session.scene.twitter.groups.forEach((g) => {
+  //   const i = ctx.session.user.groups.findIndex((grUser) => (grUser.username ? grUser.username : grUser.group_id) === (g.username ? g.username : g.group_id))
+  //   if (i !== -1) {
+  //     groups.push(i)
+  //   }
+  // })
+  // groups.filter(e => e)
 
-  ctx.session.groups = groups
-  ctx.session.pages = Math.ceil(groups.length / pageLength)
+  ctx.session.groups = settigns.map(({ group }) => group)
+  ctx.session.pages = Math.ceil(ctx.session.groups.length / pageLength)
   ctx.session.page = 0
 
   await showTwitterChannels(ctx)
@@ -198,8 +206,8 @@ async function showSettings (ctx) {
   }
 
   ctx.editMessageText(ctx.i18n.t('twitter.edit', {
-    group_name: ctx.session.user.groups[ctx.session.currentGroupIndex].username || ctx.session.user.groups[ctx.session.currentGroupIndex].group_id,
-    screen_name: twitterErr.screen_name
+    group_name: ctx.session.scene.channel.username || ctx.session.scene.channel.group_id,
+    screen_name: 'screen_name'
   }),
   Markup.inlineKeyboard(editTwitterButtons(settings._id).concat([
     Markup.callbackButton(ctx.i18n.t('back'), `twitter:twitter:${ctx.session.scene.twitter.id}`)
@@ -210,9 +218,10 @@ async function showSettings (ctx) {
 }
 
 twitterChannelSettings.enter(async (ctx) => {
-  ctx.session.scene.channel = ctx.session.user.groups[ctx.match[1]]
-  ctx.session.currentGroupIndex = ctx.match[1]
-  ctx.session.currentGroup = ctx.session.user.groups[ctx.match[1]].username ? ctx.session.user.groups[ctx.match[1]].username : ctx.session.user.groups[ctx.match[1]].group_id
+  ctx.session.scene.channel = ctx.session.user.groups.find((group) => group.id === ctx.match[1])
+  // ctx.session.currentGroupIndex = ctx.match[1]
+  // ctx.session.currentGroup = ctx.session.user.groups[ctx.match[1]].username ? ctx.session.user.groups[ctx.match[1]].username : ctx.session.user.groups[ctx.match[1]].group_id
+  ctx.session.currentGroup = ctx.session.scene.channel
 
   await showSettings(ctx)
 })

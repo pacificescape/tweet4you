@@ -6,7 +6,7 @@ class Message {
       this.tweet = tweet
       this.preview = true
       this.reply_ids = {}
-      this.groups = twitter.groups.map(g => g.group_id ? g.group_id : g.username)
+      this.groups = twitter.groups.map(g => g.group_id ? g.group_id : g.username).filter(Boolean)
       this.twitter = twitter
       this.settings = settings
       this.trash = this.isTrash()

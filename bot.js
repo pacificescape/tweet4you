@@ -75,8 +75,8 @@ db.connection.once('open', async () => {
   } else {
     bot.launch().then(() => {
       console.log('bot start polling')
-      // const list = new ListPolling(db)
-      // list.job.start()
+      const list = new ListPolling(db)
+      list.job.start()
     }).catch((error) => console.log(error))
   }
 })
