@@ -13,7 +13,6 @@ const userSchema = mongoose.Schema({
   twitters: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Twitter',
-    unique: true,
     index: true
   }],
   create: {
