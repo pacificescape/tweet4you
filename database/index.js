@@ -103,6 +103,10 @@ db.Twitter.upToDate = async (ctx) => {
 
   if (!exists) ctx.session.user.twitters.addToSet(fetchedTw)
 
+  fetchedTw.users.addToSet(ctx.session.user)
+
+  await fetchedTw.save()
+
   const userSave = await ctx.session.user.save().catch((error) => console.log(ctx.session.user.username, error))
   return userSave ? fetchedTw : new Error('Didn\'t added. Error')
 }
@@ -147,7 +151,15 @@ db.Twitter.settings = async (twitterId, groupId, option) => {
 db.Twitter.activate = async (ctx, twitter, group) => {
   group.twitters = group.twitters.addToSet(twitter)
 
-  const settings = new db.Settings()
+  let settings = await db.Settings.findOne({
+    twitter,
+    group
+  })
+
+  if (!settings) {
+    settings = new db.Settings()
+  }
+
   settings.group = group
   settings.twitter = twitter
   await settings.save().catch((err) => console.log(err))
@@ -241,14 +253,10 @@ db.Group.add = async (ctx) => {
     await group.save().catch((err) => console.log(err))
   }
 
-  const newbie = group.users.reduce((a, v) => v.id !== ctx.session.user.id, true)
+  group.users.addToSet(ctx.session.user)
+  ctx.session.user.groups.addToSet(group)
 
-  if (newbie) {
-    group.users.addToSet(ctx.session.user)
-    ctx.session.user.groups.addToSet(group)
-
-    await group.save().catch((err) => console.log(err))
-  }
+  await group.save().catch((err) => console.log(err))
 
   ctx.session.user = await ctx.session.user.save()
 
